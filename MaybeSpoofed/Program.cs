@@ -128,6 +128,25 @@ namespace MaybeSpoofed
                     }
                 }
 
+                // Monitor serials
+                for(var i = 0; i<_hwid.monitorSerials.Count; i++)
+                {
+                    try
+                    {
+                        var monitor = _hwid.monitorSerials[i];
+                        var spoofedMonitor = _spoofed.monitorSerials[i];
+
+                        if(monitor == spoofedMonitor)
+                        {
+                            Custom.WriteLine($"monitor #{i} not spoofed", ConsoleColor.Red);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Custom.WriteLine("Maybe normal", ConsoleColor.Yellow);
+                        Custom.WriteLine(ex.ToString(), ConsoleColor.Red);
+                    }
+                }
 
 
             }
