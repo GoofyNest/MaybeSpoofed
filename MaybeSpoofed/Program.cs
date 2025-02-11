@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -47,107 +48,61 @@ namespace MaybeSpoofed
 
                 if (_hwid.baseBoardSerialNumber == _spoofed.baseBoardSerialNumber)
                 {
-                    Custom.WriteLine("baseBoard not spoofed", ConsoleColor.Red);
+                    Custom.WriteLine($"baseBoard serial '{_spoofed.baseBoardSerialNumber}' not spoofed", ConsoleColor.Red);
                 }
 
                 if (_hwid.systemUuid == _spoofed.systemUuid)
                 {
-                    Custom.WriteLine("systemUuid not spoofed", ConsoleColor.Red);
+                    Custom.WriteLine($"systemUuid serial '{_spoofed.systemUuid}' not spoofed", ConsoleColor.Red);
                 }
 
-                if (_hwid.processorID == _spoofed.processorID)
+                foreach (var serial in _hwid.ramSerials)
                 {
-                    Custom.WriteLine("processorID not spoofed", ConsoleColor.Green);
+                    if (serial == "00000000")
+                        continue;
+
+                    if (_spoofed.ramSerials.Contains(serial))
+                    {
+                        Custom.WriteLine($"Ram serial '{serial}' not spoofed", ConsoleColor.Red);
+                    }
                 }
 
-                // Ram serials
-                for (var i = 0; i < _hwid.ramSerials.Count; i++)
+                foreach(var serial in _hwid.diskDriveSerials)
                 {
-                    try
+                    if(_spoofed.diskDriveSerials.Contains(serial))
                     {
-                        var ram = _hwid.ramSerials[i];
-                        var spoofedRam = _spoofed.ramSerials[i];
-
-                        if (ram == spoofedRam)
-                        {
-                            Custom.WriteLine($"ramSerials #{i} not spoofed", ConsoleColor.Red);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Custom.WriteLine("Maybe normal", ConsoleColor.Yellow);
-                        Custom.WriteLine(ex.ToString(), ConsoleColor.Red);
+                        Custom.WriteLine($"Disk drive serial '{serial}' not spoofed", ConsoleColor.Red);
                     }
                 }
 
-                // Diskdrive Serials
-                for (var i = 0; i < _hwid.diskDriveSerials.Count; i++)
+                //foreach (var serial in _hwid.videoController)
+                //{
+                //    var index = _spoofed.videoController.FindIndex(m => m.PNPDeviceID == serial.PNPDeviceID);
+                //
+                //    if(index > -1)
+                //    {
+                //        Custom.WriteLine($"GPU serial '{serial.PNPDeviceID}' not spoofed", ConsoleColor.Red);
+                //    }
+                //}
+
+                foreach(var serial in _hwid.macAddresses)
                 {
-                    try
+                    if(_spoofed.macAddresses.Contains(serial))
                     {
-                        var disk = _hwid.diskDriveSerials[i];
-                        var spoofedDisk = _spoofed.diskDriveSerials[i];
-
-                        if (disk == spoofedDisk)
-                        {
-                            Custom.WriteLine($"diskDriveSerials #{i} not spoofed", ConsoleColor.Red);
-                        }
-                    }
-                    catch(Exception ex)
-                    {
-                        Custom.WriteLine("Maybe normal", ConsoleColor.Yellow);
-                        Custom.WriteLine(ex.ToString(), ConsoleColor.Red);
+                        Custom.WriteLine($"Mac serial '{serial}' not spoofed", ConsoleColor.Red);
                     }
                 }
 
-                var card1 = _hwid.videoController;
-                var card2 = _spoofed.videoController;
-
-                if(card1.PNPDeviceID == card2.PNPDeviceID)
+                foreach(var serial in _hwid.monitorSerials)
                 {
-                    Custom.WriteLine($"videoController not spoofed", ConsoleColor.Yellow);
-                }
+                    if (serial.Length <= 1)
+                        continue;
 
-                // Mac addresses
-                for (var i = 0; i < _hwid.macAddresses.Count; i++)
-                {
-                    try
+                    if (_spoofed.monitorSerials.Contains(serial))
                     {
-                        var mac = _hwid.macAddresses[i];
-                        var spoofedMac = _spoofed.macAddresses[i];
-
-                        if (mac == spoofedMac)
-                        {
-                            Custom.WriteLine($"macAddresses #{i} not spoofed", ConsoleColor.Red);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Custom.WriteLine("Maybe normal", ConsoleColor.Yellow);
-                        Custom.WriteLine(ex.ToString(), ConsoleColor.Red);
+                        Custom.WriteLine($"Monitor serial '{serial}' not spoofed", ConsoleColor.Red);
                     }
                 }
-
-                // Monitor serials
-                for(var i = 0; i<_hwid.monitorSerials.Count; i++)
-                {
-                    try
-                    {
-                        var monitor = _hwid.monitorSerials[i];
-                        var spoofedMonitor = _spoofed.monitorSerials[i];
-
-                        if(monitor == spoofedMonitor)
-                        {
-                            Custom.WriteLine($"monitor #{i} not spoofed", ConsoleColor.Red);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Custom.WriteLine("Maybe normal", ConsoleColor.Yellow);
-                        Custom.WriteLine(ex.ToString(), ConsoleColor.Red);
-                    }
-                }
-
 
             }
 

@@ -13,7 +13,7 @@ namespace MaybeSpoofed
 
         public List<string> diskDriveSerials { get; set; } = new List<string>();
 
-        public GraphicCard videoController { get; set; } = new GraphicCard();
+        public List<GraphicCard> videoController { get; set; } = new List<GraphicCard>();
 
         public List<string> macAddresses { get; set; } = new List<string>();
 

@@ -76,14 +76,7 @@ namespace MaybeSpoofed
 
             foreach (var controller in videoControllers)
             {
-                GraphicCard card = new GraphicCard();
-
-                card.Description = controller[0];
-                card.PNPDeviceID = controller[1];
-
-                _hwid.videoController = card;
-
-                break;
+                _hwid.videoController.Add(new GraphicCard() { Description = controller[0], PNPDeviceID = controller[1] });
             }
 
             // Get MAC Addresses of all active PCI network adapters
