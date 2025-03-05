@@ -1,6 +1,9 @@
 # MaybeSpoofed
 A small tiny program to check if you are Hardware spoofed for EAC Rust
+
 https://dotnet.microsoft.com/en-us/download
+
+![Maybe Spoofed](https://i.imgur.com/hrD4Q5Q.png)
 
 ## How to use
 - Ensure you aren't spoofed, restart pc.
