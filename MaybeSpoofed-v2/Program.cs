@@ -88,6 +88,8 @@ namespace MaybeSpoofed
                         Custom.WriteLine($"MotherboardInformation SerialNumber '{SpoofedHardwareID.MotherboardInformation.SerialNumber}' not spoofed", ConsoleColor.Red);
                     }
                 }
+                else
+                    Custom.WriteLine($"Error grabbing MotherboardInformation", ConsoleColor.DarkRed);
 
                 if (HardwareID.SystemInformation != null)
                 {
@@ -96,6 +98,8 @@ namespace MaybeSpoofed
                         Custom.WriteLine($"SystemInformation UUID '{SpoofedHardwareID.MotherboardInformation.SerialNumber}' not spoofed", ConsoleColor.Red);
                     }
                 }
+                else
+                    Custom.WriteLine($"Error grabbing SystemInformation", ConsoleColor.DarkRed);
 
                 if (HardwareID.Ram != null)
                 {
@@ -112,6 +116,8 @@ namespace MaybeSpoofed
                         }
                     }
                 }
+                else
+                    Custom.WriteLine($"Error grabbing Ram", ConsoleColor.DarkRed);
 
                 if (HardwareID.DiskDrives != null)
                 {
@@ -125,6 +131,8 @@ namespace MaybeSpoofed
                         }
                     }
                 }
+                else
+                    Custom.WriteLine($"Error grabbing DiskDrives", ConsoleColor.DarkRed);
 
                 if (HardwareID.GPUs != null)
                 {
@@ -146,6 +154,8 @@ namespace MaybeSpoofed
                         }
                     }
                 }
+                else
+                    Custom.WriteLine($"Error grabbing GPUs", ConsoleColor.DarkRed);
 
                 if (HardwareID.NetworkAdapters != null)
                 {
@@ -165,6 +175,8 @@ namespace MaybeSpoofed
                         }
                     }
                 }
+                else
+                    Custom.WriteLine($"Error grabbing NetworkAdapters", ConsoleColor.DarkRed);
 
                 if (HardwareID.Monitors != null)
                 {
@@ -181,6 +193,8 @@ namespace MaybeSpoofed
                         }
                     }
                 }
+                else
+                    Custom.WriteLine($"Error grabbing Monitors", ConsoleColor.DarkRed);
 
                 if (HardwareID.RouterMacs != null)
                 {
@@ -201,6 +215,8 @@ namespace MaybeSpoofed
                         }
                     }
                 }
+                else
+                    Custom.WriteLine($"Error grabbing RouterMacs", ConsoleColor.DarkRed);
 
                 if (SpoofedHardwareID.OSInformation != null)
                 {
@@ -214,6 +230,8 @@ namespace MaybeSpoofed
                         Custom.WriteLine($"Secureboot is disabled, will raise flags to EAC", ConsoleColor.Yellow);
                     }
                 }
+                else
+                    Custom.WriteLine($"Error grabbing OSInformation", ConsoleColor.DarkRed);
 
                 if (SpoofedHardwareID.BIOS != null)
                 {
@@ -222,6 +240,8 @@ namespace MaybeSpoofed
                         Custom.WriteLine($"Recommended to update BIOS Version '{SpoofedHardwareID.BIOS.ReleaseDate}'", ConsoleColor.Yellow);
                     }
                 }
+                else
+                    Custom.WriteLine($"Error grabbing Bios", ConsoleColor.DarkRed);
             }
 
             Console.ReadLine();
