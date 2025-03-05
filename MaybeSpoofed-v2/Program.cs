@@ -68,9 +68,12 @@ namespace MaybeSpoofed
                     Custom.WriteLine("Trusted platform module(TPM) is enabled, please disable it in BIOS", ConsoleColor.Red);
                 }
 
-                if(SpoofedHardwareID.BluetoothDevices.Count > 0)
+                if (SpoofedHardwareID.BluetoothDevices != null)
                 {
-                    Custom.WriteLine("Bluetooth card is present, please disable it in BIOS", ConsoleColor.Red);
+                    if (SpoofedHardwareID.BluetoothDevices.Count > 0)
+                    {
+                        Custom.WriteLine("Bluetooth card is present, please disable it in BIOS", ConsoleColor.Red);
+                    }
                 }
 
                 if(SpoofedHardwareID.WindowsFastStartup)
@@ -78,113 +81,146 @@ namespace MaybeSpoofed
                     Custom.WriteLine("Windows fast startup is enabled, can lead to bans if using `Shutdown pc`", ConsoleColor.Yellow);
                 }
 
-                if(HardwareID.MotherboardInformation.SerialNumber == SpoofedHardwareID.MotherboardInformation.SerialNumber)
+                if (HardwareID.MotherboardInformation != null)
                 {
-                    Custom.WriteLine($"MotherboardInformation SerialNumber '{SpoofedHardwareID.MotherboardInformation.SerialNumber}' not spoofed", ConsoleColor.Red);
-                }
-
-                if(HardwareID.SystemInformation.UUID == SpoofedHardwareID.SystemInformation.UUID)
-                {
-                    Custom.WriteLine($"SystemInformation UUID '{SpoofedHardwareID.MotherboardInformation.SerialNumber}' not spoofed", ConsoleColor.Red);
-                }
-
-                foreach(var ram in HardwareID.Ram)
-                {
-                    var serial = ram.SerialNumber;
-
-                    if (serial == "00000000")
-                        continue;
-
-                    if (SpoofedHardwareID.Ram.FindAll(m => m.SerialNumber == serial).Count > 0)
+                    if (HardwareID.MotherboardInformation.SerialNumber == SpoofedHardwareID.MotherboardInformation.SerialNumber)
                     {
-                        Custom.WriteLine($"Ram serial '{serial}' not spoofed", ConsoleColor.Red);
+                        Custom.WriteLine($"MotherboardInformation SerialNumber '{SpoofedHardwareID.MotherboardInformation.SerialNumber}' not spoofed", ConsoleColor.Red);
                     }
                 }
 
-                foreach(var disk in HardwareID.DiskDrives)
+                if (HardwareID.SystemInformation != null)
                 {
-                    var serial = disk.SerialNumber;
-
-                    if(SpoofedHardwareID.DiskDrives.FindAll(m => m.SerialNumber == serial).Count > 0)
+                    if (HardwareID.SystemInformation.UUID == SpoofedHardwareID.SystemInformation.UUID)
                     {
-                        Custom.WriteLine($"Disk drive serial '{serial}' not spoofed", ConsoleColor.Red);
+                        Custom.WriteLine($"SystemInformation UUID '{SpoofedHardwareID.MotherboardInformation.SerialNumber}' not spoofed", ConsoleColor.Red);
                     }
                 }
 
-                foreach(var gpu in HardwareID.GPUs)
+                if (HardwareID.Ram != null)
                 {
-                    var serial = gpu.SerialNumber;
-                    var UUID = gpu.UUID;
+                    foreach (var ram in HardwareID.Ram)
+                    {
+                        var serial = ram.SerialNumber;
 
-                    if(string.IsNullOrWhiteSpace(UUID))
-                    {
-                        Custom.WriteLine($"We dont support your GPU, trust your spoofer provider or check manually", ConsoleColor.DarkRed);
-                    }
-                    else
-                    {
-                        if (SpoofedHardwareID.GPUs.FindAll(m => m.UUID == UUID).Count > 0)
+                        if (serial == "00000000")
+                            continue;
+
+                        if (SpoofedHardwareID.Ram.FindAll(m => m.SerialNumber == serial).Count > 0)
                         {
-                            Custom.WriteLine($"GPU UUID '{UUID}' not spoofed", ConsoleColor.Red);
+                            Custom.WriteLine($"Ram serial '{serial}' not spoofed", ConsoleColor.Red);
                         }
                     }
                 }
 
-                foreach(var network in HardwareID.NetworkAdapters)
+                if (HardwareID.DiskDrives != null)
                 {
-                    var mac = network.Mac;
-
-                    if (network.Name.StartsWith("WAN Miniport"))
-                        continue;
-
-                    if (network.Name.ToLower().Contains("vpn"))
-                        continue;
-
-                    if (SpoofedHardwareID.NetworkAdapters.FindAll(m => m.Mac == mac).Count > 0)
+                    foreach (var disk in HardwareID.DiskDrives)
                     {
-                        Custom.WriteLine($"Network '{network.Name}' Mac '{mac}' not spoofed", ConsoleColor.Red);
+                        var serial = disk.SerialNumber;
+
+                        if (SpoofedHardwareID.DiskDrives.FindAll(m => m.SerialNumber == serial).Count > 0)
+                        {
+                            Custom.WriteLine($"Disk drive serial '{serial}' not spoofed", ConsoleColor.Red);
+                        }
                     }
                 }
 
-                foreach(var monitor in HardwareID.Monitors)
+                if (HardwareID.GPUs != null)
                 {
-                    var serial = monitor.SerialNumber;
-
-                    if (serial.Length <= 1)
-                        continue;
-
-                    if (SpoofedHardwareID.Monitors.FindAll(m => m.SerialNumber == serial).Count > 0)
+                    foreach (var gpu in HardwareID.GPUs)
                     {
-                        Custom.WriteLine($"Monitor serial '{serial}' not spoofed", ConsoleColor.Red);
+                        var serial = gpu.SerialNumber;
+                        var UUID = gpu.UUID;
+
+                        if (string.IsNullOrWhiteSpace(UUID))
+                        {
+                            Custom.WriteLine($"We dont support your GPU, trust your spoofer provider or check manually", ConsoleColor.DarkRed);
+                        }
+                        else
+                        {
+                            if (SpoofedHardwareID.GPUs.FindAll(m => m.UUID == UUID).Count > 0)
+                            {
+                                Custom.WriteLine($"GPU UUID '{UUID}' not spoofed", ConsoleColor.Red);
+                            }
+                        }
                     }
                 }
 
-                foreach(var mac in HardwareID.RouterMacs)
+                if (HardwareID.NetworkAdapters != null)
                 {
-                    if (string.IsNullOrEmpty(mac))
-                        continue;
-
-                    if (mac.Length < 3)
-                        continue;
-
-                    if(SpoofedHardwareID.RouterMacs.Contains(mac))
+                    foreach (var network in HardwareID.NetworkAdapters)
                     {
-                        Custom.WriteLine($"Router Mac '{mac}' not spoofed", ConsoleColor.Yellow);
+                        var mac = network.Mac;
+
+                        if (network.Name.StartsWith("WAN Miniport"))
+                            continue;
+
+                        if (network.Name.ToLower().Contains("vpn"))
+                            continue;
+
+                        if (SpoofedHardwareID.NetworkAdapters.FindAll(m => m.Mac == mac).Count > 0)
+                        {
+                            Custom.WriteLine($"Network '{network.Name}' Mac '{mac}' not spoofed", ConsoleColor.Red);
+                        }
                     }
                 }
 
-                if(SpoofedHardwareID.OSInformation.Username.Contains("@"))
+                if (HardwareID.Monitors != null)
                 {
-                    Custom.WriteLine($"Windows username '{SpoofedHardwareID.OSInformation.Username}' contains email, should be offline account", ConsoleColor.Yellow);
+                    foreach (var monitor in HardwareID.Monitors)
+                    {
+                        var serial = monitor.SerialNumber;
+
+                        if (serial.Length <= 1)
+                            continue;
+
+                        if (SpoofedHardwareID.Monitors.FindAll(m => m.SerialNumber == serial).Count > 0)
+                        {
+                            Custom.WriteLine($"Monitor serial '{serial}' not spoofed", ConsoleColor.Red);
+                        }
+                    }
                 }
 
-                if(!SpoofedHardwareID.OSInformation.SecureBoot)
+                if (HardwareID.RouterMacs != null)
                 {
-                    Custom.WriteLine($"Secureboot is disabled, will raise flags to EAC", ConsoleColor.Yellow);
+                    foreach (var mac in HardwareID.RouterMacs)
+                    {
+                        if (string.IsNullOrEmpty(mac))
+                            continue;
+
+                        if (mac.Length < 3)
+                            continue;
+
+                        if (SpoofedHardwareID.RouterMacs != null)
+                        {
+                            if (SpoofedHardwareID.RouterMacs.Contains(mac))
+                            {
+                                Custom.WriteLine($"Router Mac '{mac}' not spoofed", ConsoleColor.Yellow);
+                            }
+                        }
+                    }
                 }
 
-                if(!SpoofedHardwareID.BIOS.ReleaseDate.Contains("2024") && !SpoofedHardwareID.BIOS.ReleaseDate.Contains("2025"))
+                if (SpoofedHardwareID.OSInformation != null)
                 {
-                    Custom.WriteLine($"Recommended to update BIOS Version '{SpoofedHardwareID.BIOS.ReleaseDate}'", ConsoleColor.Yellow);
+                    if (SpoofedHardwareID.OSInformation.Username.Contains("@"))
+                    {
+                        Custom.WriteLine($"Windows username '{SpoofedHardwareID.OSInformation.Username}' contains email, should be offline account", ConsoleColor.Yellow);
+                    }
+
+                    if (!SpoofedHardwareID.OSInformation.SecureBoot)
+                    {
+                        Custom.WriteLine($"Secureboot is disabled, will raise flags to EAC", ConsoleColor.Yellow);
+                    }
+                }
+
+                if (SpoofedHardwareID.BIOS != null)
+                {
+                    if (!SpoofedHardwareID.BIOS.ReleaseDate.Contains("2024") && !SpoofedHardwareID.BIOS.ReleaseDate.Contains("2025"))
+                    {
+                        Custom.WriteLine($"Recommended to update BIOS Version '{SpoofedHardwareID.BIOS.ReleaseDate}'", ConsoleColor.Yellow);
+                    }
                 }
             }
 

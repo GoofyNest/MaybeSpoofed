@@ -33,7 +33,7 @@ namespace MaybeSpoofed_v2.Functions
                 Ram = GetRam(),
                 DiskDrives = GetHardDrives(),
                 NetworkAdapters = GetNetworkAdapters(),
-                RouterMacs = GetRouterMacs(),
+                RouterMacs = GetAllArpEntries(),
                 WindowsFastStartup = GetWindowsFastStartup()
             };
 
@@ -71,6 +71,10 @@ namespace MaybeSpoofed_v2.Functions
         public static List<string> GetRouterMacs()
         {
             List<string> RouterMacs = [];
+
+            GetAllArpEntries();
+
+            return null;
 
             try
             {
@@ -553,6 +557,75 @@ namespace MaybeSpoofed_v2.Functions
             string value = output.Substring(startIndex, endIndex - startIndex).Trim();
 
             return string.IsNullOrEmpty(value) ? string.Empty : value;
+        }
+
+        public static List<string> GetAllArpEntries()
+        {
+            List<string> RouterMacs = [];
+
+            try
+            {
+                // Run the "arp -a" command and capture the output
+                ProcessStartInfo pro = new ProcessStartInfo("cmd", "/C arp -a")
+                {
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using Process? process = Process.Start(pro);
+
+                if (process == null) return null!;
+
+                using var reader = process.StandardOutput;
+                string output = reader.ReadToEnd();
+                string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (string line in lines)
+                {
+                    // Skip lines that are not part of the ARP table or header rows
+                    if (line.StartsWith("Interface"))
+                    {
+                        // New interface found, skip the header
+                        continue;
+                    }
+                    else if (line.StartsWith("  Internet Address"))
+                    {
+                        // Skip the header line
+                        continue;
+                    }
+                    else if (line.Contains("dynamic") || line.Contains("static"))
+                    {
+                        // Process ARP entries
+                        var columns = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (columns.Length >= 3)
+                        {
+                            string internetAddress = columns[0];  // The Internet Address (IP address)
+                            string physicalAddress = columns[1];  // The Physical Address (MAC address)
+
+                            if (internetAddress.StartsWith("224.0.0"))
+                                continue;
+
+                            if (internetAddress.StartsWith("239.255"))
+                                continue;
+
+                            // Only show entries with a valid MAC address
+                            if (!string.IsNullOrEmpty(physicalAddress) && physicalAddress != "ff-ff-ff-ff-ff-ff")
+                            {
+                                RouterMacs.Add(physicalAddress);
+                            }
+                        }
+                    }
+                }
+
+                return RouterMacs;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error while retrieving ARP entries: {ex.Message}");
+            }
+
+            return null!;
         }
 
         public static string GetMacAddressFromArpCache(string ipAddress)
