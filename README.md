@@ -9,6 +9,17 @@ https://dotnet.microsoft.com/en-us/download
 - Open program and check the results
 
 ## Will warn for
-- TPM Trusted Platform Module being activated.
-- Wifi card present
-- Bluetooth card/adapter present
+- Trusted Platform Module(TPM) enabled
+- Bluetooth devices count > 0
+- Windows fast startup enabled
+- Motherboard SerialNumber not being spoofed
+- SystemInformation UUID not being spoofed
+- Ram serial numbers not being spoofed
+- Disk drive serials not being spoofed
+- NVIDIA GPU UUID not spoofed
+- Network MAC not spoofed
+- Monitor serials not being spoofed
+- Router MAC not spoofed
+- Windows username not offline account
+- SecureBoot disabled
+- Bios version outdated
