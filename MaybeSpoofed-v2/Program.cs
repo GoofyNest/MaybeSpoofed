@@ -160,6 +160,9 @@ namespace MaybeSpoofed
                     if (string.IsNullOrEmpty(mac))
                         continue;
 
+                    if (mac.Length < 3)
+                        continue;
+
                     if(SpoofedHardwareID.RouterMacs.Contains(mac))
                     {
                         Custom.WriteLine($"Router Mac '{mac}' not spoofed", ConsoleColor.Yellow);
