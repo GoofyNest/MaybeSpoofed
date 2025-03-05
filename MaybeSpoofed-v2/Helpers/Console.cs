@@ -20,6 +20,9 @@ namespace MaybeSpoofed
                     break;
 
                 case ConsoleColor.Red:
+                    prefix = "[CAUSE BANS] ";
+                    break;
+
                 case ConsoleColor.DarkRed:
                     prefix = "[ERROR] ";
                     break;
