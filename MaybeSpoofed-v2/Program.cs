@@ -136,9 +136,12 @@ namespace MaybeSpoofed
                     if (network.Name.StartsWith("WAN Miniport"))
                         continue;
 
+                    if (network.Name.ToLower().Contains("vpn"))
+                        continue;
+
                     if (SpoofedHardwareID.NetworkAdapters.FindAll(m => m.Mac == mac).Count > 0)
                     {
-                        Custom.WriteLine($"Network Mac '{mac}' not spoofed", ConsoleColor.Red);
+                        Custom.WriteLine($"Network '{network.Name}' Mac '{mac}' not spoofed", ConsoleColor.Red);
                     }
                 }
 
