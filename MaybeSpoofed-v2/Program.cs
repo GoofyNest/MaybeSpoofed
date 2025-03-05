@@ -133,6 +133,9 @@ namespace MaybeSpoofed
                 {
                     var mac = network.Mac;
 
+                    if (network.Name.StartsWith("WAN Miniport"))
+                        continue;
+
                     if (SpoofedHardwareID.NetworkAdapters.FindAll(m => m.Mac == mac).Count > 0)
                     {
                         Custom.WriteLine($"Network Mac '{mac}' not spoofed", ConsoleColor.Red);
@@ -154,6 +157,9 @@ namespace MaybeSpoofed
 
                 foreach(var mac in HardwareID.RouterMacs)
                 {
+                    if (string.IsNullOrEmpty(mac))
+                        continue;
+
                     if(SpoofedHardwareID.RouterMacs.Contains(mac))
                     {
                         Custom.WriteLine($"Router Mac '{mac}' not spoofed", ConsoleColor.Yellow);
