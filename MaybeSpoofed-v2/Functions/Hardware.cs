@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using MaybeSpoofed;
 using MaybeSpoofed_v2.Classes;
 using Microsoft.Management.Infrastructure;
@@ -561,11 +562,10 @@ namespace MaybeSpoofed_v2.Functions
 
         public static List<string> GetAllArpEntries()
         {
-            List<string> RouterMacs = [];
+            List<string> routerMacs = new();
 
             try
             {
-                // Run the "arp -a" command and capture the output
                 ProcessStartInfo pro = new ProcessStartInfo("cmd", "/C arp -a")
                 {
                     RedirectStandardOutput = true,
@@ -574,56 +574,50 @@ namespace MaybeSpoofed_v2.Functions
                 };
 
                 using Process? process = Process.Start(pro);
-
-                if (process == null) return null!;
+                if (process == null)
+                {
+                    Custom.WriteLine("GetAllArpEntries - Maybe permission error?", ConsoleColor.Red);
+                    return null!;
+                }
 
                 using var reader = process.StandardOutput;
                 string output = reader.ReadToEnd();
-                string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
-                foreach (string line in lines)
+                // Regular expression to match IP and MAC addresses
+                Regex arpEntryPattern = new(@"(\d+\.\d+\.\d+\.\d+)\s+([a-fA-F0-9:-]{17})", RegexOptions.IgnoreCase);
+
+                // Use Regex to find all matches in the output
+                MatchCollection matches = arpEntryPattern.Matches(output);
+
+                Custom.WriteLine($"GetAllArpEntries matches: {matches.Count}", ConsoleColor.DarkMagenta);
+
+                foreach (Match match in matches)
                 {
-                    // Skip lines that are not part of the ARP table or header rows
-                    if (line.StartsWith("Interface"))
-                    {
-                        // New interface found, skip the header
+                    string internetAddress = match.Groups[1].Value;
+                    string physicalAddress = match.Groups[2].Value;
+
+                    // Ignore multicast/broadcast addresses (224.x.x.x, 239.x.x.x, 255.x.x.x)
+                    //if (internetAddress.StartsWith("224.0.0") || internetAddress.StartsWith("239.255") || internetAddress.StartsWith("255"))
+                    //    continue;
+
+                    if (physicalAddress.StartsWith("01-00-5e"))
                         continue;
-                    }
-                    else if (line.StartsWith("  Internet Address"))
-                    {
-                        // Skip the header line
+
+                    if (physicalAddress == "ff-ff-ff-ff-ff-ff")
                         continue;
-                    }
-                    else if (line.Contains("dynamic") || line.Contains("static"))
-                    {
-                        // Process ARP entries
-                        var columns = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                        if (columns.Length >= 3)
-                        {
-                            string internetAddress = columns[0];  // The Internet Address (IP address)
-                            string physicalAddress = columns[1];  // The Physical Address (MAC address)
 
-                            if (internetAddress.StartsWith("224.0.0"))
-                                continue;
-
-                            if (internetAddress.StartsWith("239.255"))
-                                continue;
-
-                            // Only show entries with a valid MAC address
-                            if (!string.IsNullOrEmpty(physicalAddress) && physicalAddress != "ff-ff-ff-ff-ff-ff")
-                            {
-                                RouterMacs.Add(physicalAddress);
-                            }
-                        }
-                    }
+                    Custom.WriteLine($"GetAllArpEntries found {physicalAddress}");
+                    routerMacs.Add(physicalAddress);
                 }
 
-                return RouterMacs;
+                return routerMacs;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error while retrieving ARP entries: {ex.Message}");
             }
+
+            Custom.WriteLine("GetAllArpEntries is null - Maybe permission error?", ConsoleColor.Red);
 
             return null!;
         }

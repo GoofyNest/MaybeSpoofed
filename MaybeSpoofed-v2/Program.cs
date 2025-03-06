@@ -1,4 +1,5 @@
-﻿using MaybeSpoofed_v2.Classes;
+﻿using System.Text;
+using MaybeSpoofed_v2.Classes;
 using MaybeSpoofed_v2.Functions;
 using Newtonsoft.Json;
 
@@ -8,6 +9,39 @@ namespace MaybeSpoofed
     {
         static void Main()
         {
+            /*
+                Add support for ethernet adapter GUID
+                
+                EAC Hardware packet for GPU
+                GPU NAME.DRIVER DATE.(Looks like UUID but has changed?)
+
+                SystemInformation.UUID
+                BIOS.Manufacturer
+                BIOS.ReleaseDate
+                SystemInformation.Vendor
+                SystemInformation.ProductName
+                DiskDrives.Model => Get-PhysicalDisk | Select-Object DeviceId, MediaType, Model, FriendlyName
+                DiskDrives.SerialNumber
+                CPUs.Name
+                GPUs.Name
+                GPUs Drive date
+                GPUs UUID?
+                NetworkAdapters.Name
+                NetworkAdapters driver version
+                NetworkAdapter firmware version
+                64-bit operating system (i guess)
+                NetworkAdapter.MAC
+                NetworkAdapter.InterfaceGuid => Get-NetAdapter | Select-Object Name, InterfaceGuid
+                SystemInformation.SystemSerialNumber
+                MotherboardInformation.SerialNumber
+                Either The following
+                    - Get-ComputerInfo | Format-List * (ConfigOptions)
+                    - Get-CimInstance Win32_SystemEnclosure | Format-List * (SerialNumber, Version, SMBIOSAssetTag)
+
+                SystemFamily => - Get-ItemProperty -Path "HKLM:\HARDWARE\DESCRIPTION\System\BIOS"
+                (To be filled by O.E.M) aka 000000_000000 if not existing
+                
+            */
             if (!Directory.Exists("config"))
                 Directory.CreateDirectory("config");
 
@@ -18,9 +52,9 @@ namespace MaybeSpoofed
             {
                 Custom.WriteLine("Loading existing hardware file", ConsoleColor.Green);
 
-                var fileContent = File.ReadAllText("config/hardware.json");
+                var fileContent = File.ReadAllText("config/hardware.json", Encoding.UTF8);
 
-                var tempSettings = JsonConvert.DeserializeObject<Components>(File.ReadAllText("config/hardware.json"));
+                var tempSettings = JsonConvert.DeserializeObject<Components>(File.ReadAllText("config/hardware.json", Encoding.UTF8));
 
                 if(tempSettings == null)
                 {
@@ -42,7 +76,7 @@ namespace MaybeSpoofed
 
                 SpoofedHardwareID = Hardware.GetHardwareID();
 
-                File.WriteAllText("config/spoofed.json", JsonConvert.SerializeObject(SpoofedHardwareID, Formatting.Indented));
+                File.WriteAllText("config/spoofed.json", JsonConvert.SerializeObject(SpoofedHardwareID, Formatting.Indented), new UTF8Encoding(true));
             }
             else
             {
@@ -50,7 +84,7 @@ namespace MaybeSpoofed
 
                 HardwareID = Hardware.GetHardwareID();
 
-                File.WriteAllText("config/hardware.json", JsonConvert.SerializeObject(HardwareID, Formatting.Indented));
+                File.WriteAllText("config/hardware.json", JsonConvert.SerializeObject(HardwareID, Formatting.Indented), new UTF8Encoding(true));
             }
 
             if(SpoofedHardwareID == null)
