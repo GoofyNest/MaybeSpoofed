@@ -2,6 +2,8 @@
 using MaybeSpoofed.Classes;
 using MaybeSpoofed.Functions;
 using Newtonsoft.Json;
+using System.Security.Principal;
+using System.Runtime.InteropServices;
 
 namespace MaybeSpoofed
 {
@@ -44,6 +46,18 @@ namespace MaybeSpoofed
             */
             if (!Directory.Exists("config"))
                 Directory.CreateDirectory("config");
+
+            if (!IsAdministrator())
+            {
+                Custom.WriteLine("Warning: This application requires administrator privileges.", ConsoleColor.Yellow);
+                Custom.WriteLine("Please restart it as an administrator.", ConsoleColor.Yellow);
+
+                Console.ReadLine();
+                Console.ReadLine();
+
+                return;
+            }
+
 
             Components HardwareID = new();
             Components SpoofedHardwareID = null!;
@@ -279,6 +293,17 @@ namespace MaybeSpoofed
             }
 
             Console.ReadLine();
+        }
+
+        static bool IsAdministrator()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                using WindowsIdentity identity = WindowsIdentity.GetCurrent();
+                WindowsPrincipal principal = new(identity);
+                return principal.IsInRole(WindowsBuiltInRole.Administrator);
+            }
+            return false;
         }
     }
 }

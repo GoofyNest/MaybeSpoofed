@@ -410,7 +410,7 @@ namespace MaybeSpoofed.Functions
 
                 if (instances == null || !instances.Any())
                 {
-                    Console.WriteLine("No TPM module found or it may be disabled in BIOS/UEFI.");
+                    Custom.WriteLine("No TPM module found or it may be disabled in BIOS/UEFI.", ConsoleColor.Green);
                     return null!;
                 }
 
@@ -428,7 +428,7 @@ namespace MaybeSpoofed.Functions
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error retrieving TPM information: {ex.Message}");
+                Custom.WriteLine($"Error retrieving TPM information: {ex.Message}", ConsoleColor.Red);
             }
 
             return null!;
