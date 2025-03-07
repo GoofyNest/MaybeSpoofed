@@ -1,16 +1,18 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using MaybeSpoofed;
-using MaybeSpoofed_v2.Classes;
+using MaybeSpoofed.Classes;
 using Microsoft.Management.Infrastructure;
 using Microsoft.Win32;
-using static MaybeSpoofed_v2.Classes.Components;
+using static MaybeSpoofed.Classes.Components;
 
-namespace MaybeSpoofed_v2.Functions
+namespace MaybeSpoofed.Functions
 {
-    public class Hardware
+    public partial class Hardware
     {
+        [GeneratedRegex(@"(\d+\.\d+\.\d+\.\d+)\s+([a-fA-F0-9:-]{17})", RegexOptions.IgnoreCase)]
+        private static partial Regex ArpEntryRegex();
+
         public static readonly Dictionary<string, string> ManufacturerMap = new()
         {
             { "BNQ", "BenQ" }, { "ACR", "Acer" }, { "DEL", "Dell" }, { "HWP", "HP" },
@@ -67,43 +69,6 @@ namespace MaybeSpoofed_v2.Functions
                 catch { }
             }
             return false;
-        }
-
-        public static List<string> GetRouterMacs()
-        {
-            List<string> RouterMacs = [];
-
-            GetAllArpEntries();
-
-            return null;
-
-            try
-            {
-                using var session = CimSession.Create(null);
-
-                // Query to get IP configuration details (for enabled adapters)
-                foreach (var obj in session.QueryInstances("root\\cimv2", "WQL", "SELECT * FROM Win32_NetworkAdapterConfiguration WHERE IPEnabled = true"))
-                {
-                    // Skip adapters without a MAC address
-                    var macAddress = obj.CimInstanceProperties["MACAddress"]?.Value?.ToString();
-                    if (string.IsNullOrEmpty(macAddress))
-                        continue; // Skip this adapter if MAC address is not available
-
-                    // Get Default Gateway addresses
-                    var defaultGateway = obj.CimInstanceProperties["DefaultIPGateway"]?.Value as string[];
-                    if (defaultGateway != null && defaultGateway.Length > 0)
-                    {
-                        foreach (var gateway in defaultGateway)
-                        {
-                            RouterMacs.Add(GetMacAddressFromArpCache(gateway));
-                        }
-                    }
-                }
-
-                return RouterMacs;
-            }
-            catch { }
-            return null!;
         }
 
         public static List<Components.NetworkAdapter> GetNetworkAdapters()
@@ -307,38 +272,36 @@ namespace MaybeSpoofed_v2.Functions
         {
             try
             {
-                using (var session = CimSession.Create(null))
+                using var session = CimSession.Create(null);
+                // Query to get all details about the operating system
+                foreach (var obj in session.QueryInstances("root\\cimv2", "WQL", "SELECT * FROM Win32_OperatingSystem"))
                 {
-                    // Query to get all details about the operating system
-                    foreach (var obj in session.QueryInstances("root\\cimv2", "WQL", "SELECT * FROM Win32_OperatingSystem"))
+                    Components.OperatingSystem OSInformation = new()
                     {
-                        Components.OperatingSystem OSInformation = new()
-                        {
-                            Caption = obj.CimInstanceProperties["Caption"]?.Value.ToString() ?? string.Empty,
-                            Version = obj.CimInstanceProperties["Version"]?.Value.ToString() ?? string.Empty,
-                            BuildNumber = obj.CimInstanceProperties["BuildNumber"]?.Value.ToString() ?? string.Empty,
-                            ProductType = obj.CimInstanceProperties["ProductType"]?.Value.ToString() ?? string.Empty,
-                            Manufacturer = obj.CimInstanceProperties["Manufacturer"]?.Value.ToString() ?? string.Empty,
-                            Architecture = obj.CimInstanceProperties["OSArchitecture"]?.Value.ToString() ?? string.Empty,
+                        Caption = obj.CimInstanceProperties["Caption"]?.Value.ToString() ?? string.Empty,
+                        Version = obj.CimInstanceProperties["Version"]?.Value.ToString() ?? string.Empty,
+                        BuildNumber = obj.CimInstanceProperties["BuildNumber"]?.Value.ToString() ?? string.Empty,
+                        ProductType = obj.CimInstanceProperties["ProductType"]?.Value.ToString() ?? string.Empty,
+                        Manufacturer = obj.CimInstanceProperties["Manufacturer"]?.Value.ToString() ?? string.Empty,
+                        Architecture = obj.CimInstanceProperties["OSArchitecture"]?.Value.ToString() ?? string.Empty,
 
-                            LastBoot = obj.CimInstanceProperties["LastBootUpTime"]?.Value.ToString() ?? string.Empty,
-                            Username = obj.CimInstanceProperties["RegisteredUser"]?.Value.ToString() ?? string.Empty,
-                            SerialNumber = obj.CimInstanceProperties["SerialNumber"]?.Value.ToString() ?? string.Empty,
-                        };
+                        LastBoot = obj.CimInstanceProperties["LastBootUpTime"]?.Value.ToString() ?? string.Empty,
+                        Username = obj.CimInstanceProperties["RegisteredUser"]?.Value.ToString() ?? string.Empty,
+                        SerialNumber = obj.CimInstanceProperties["SerialNumber"]?.Value.ToString() ?? string.Empty,
+                    };
 
-                        // Check SecureBootEnabled property
-                        var secureBoot = obj.CimInstanceProperties["SecureBootEnabled"]?.Value;
-                        if (secureBoot != null)
-                        {
-                            OSInformation.SecureBoot = true;
-                        }
-                        else
-                        {
-                            OSInformation.SecureBoot = false;
-                        }
-
-                        return OSInformation;
+                    // Check SecureBootEnabled property
+                    var secureBoot = obj.CimInstanceProperties["SecureBootEnabled"]?.Value;
+                    if (secureBoot != null)
+                    {
+                        OSInformation.SecureBoot = true;
                     }
+                    else
+                    {
+                        OSInformation.SecureBoot = false;
+                    }
+
+                    return OSInformation;
                 }
             }
             catch { }
@@ -438,7 +401,7 @@ namespace MaybeSpoofed_v2.Functions
             return null!;
         }
 
-        public static TrustedPlatFormModule? GetTrustedPlatFormModule()
+        public static TrustedPlatFormModule GetTrustedPlatFormModule()
         {
             try
             {
@@ -448,7 +411,7 @@ namespace MaybeSpoofed_v2.Functions
                 if (instances == null || !instances.Any())
                 {
                     Console.WriteLine("No TPM module found or it may be disabled in BIOS/UEFI.");
-                    return null;
+                    return null!;
                 }
 
                 foreach (var obj in instances)
@@ -458,7 +421,7 @@ namespace MaybeSpoofed_v2.Functions
                         ManufacturerID = obj.CimInstanceProperties["ManufacturerID"]?.Value?.ToString() ?? string.Empty,
                         ManufacturerVersion = obj.CimInstanceProperties["ManufacturerVersion"]?.Value?.ToString() ?? string.Empty,
                         Version = obj.CimInstanceProperties["SpecVersion"]?.Value?.ToString() ?? string.Empty,
-                        isTPMPResent = true,
+                        IsTPMPResent = true,
                         Activated = obj.CimInstanceProperties["IsActivated_InitialValue"]?.Value?.ToString() ?? string.Empty
                     };
                 }
@@ -468,7 +431,7 @@ namespace MaybeSpoofed_v2.Functions
                 Console.WriteLine($"Error retrieving TPM information: {ex.Message}");
             }
 
-            return null;
+            return null!;
         }
 
         public static List<VideoController> GetVideoControllers()
@@ -548,22 +511,23 @@ namespace MaybeSpoofed_v2.Functions
         {
             // This method extracts the value corresponding to a given label
             int index = output.IndexOf(label);
-            if (index == -1) return string.Empty;
+            if (index == -1) 
+                return string.Empty;
 
-            int startIndex = output.IndexOf(":", index) + 1;
-            int endIndex = output.IndexOf("\n", startIndex);
-            string value = output.Substring(startIndex, endIndex - startIndex).Trim();
+            int startIndex = output.IndexOf(':', index) + 1;
+            int endIndex = output.IndexOf('\n', startIndex);
+            string value = output[startIndex..endIndex].Trim();
 
             return string.IsNullOrEmpty(value) ? string.Empty : value;
         }
 
         public static List<string> GetAllArpEntries()
         {
-            List<string> routerMacs = new();
+            List<string> routerMacs = [];
 
             try
             {
-                ProcessStartInfo pro = new ProcessStartInfo("cmd", "/C arp -a")
+                ProcessStartInfo pro = new("cmd", "/C arp -a")
                 {
                     RedirectStandardOutput = true,
                     UseShellExecute = false,
@@ -581,7 +545,7 @@ namespace MaybeSpoofed_v2.Functions
                 string output = reader.ReadToEnd();
 
                 // Regular expression to match IP and MAC addresses
-                Regex arpEntryPattern = new(@"(\d+\.\d+\.\d+\.\d+)\s+([a-fA-F0-9:-]{17})", RegexOptions.IgnoreCase);
+                Regex arpEntryPattern = ArpEntryRegex();
 
                 // Use Regex to find all matches in the output
                 MatchCollection matches = arpEntryPattern.Matches(output);
@@ -624,7 +588,7 @@ namespace MaybeSpoofed_v2.Functions
             try
             {
                 // Run the "arp -a" command and capture the output
-                ProcessStartInfo pro = new ProcessStartInfo("cmd", $"/C arp -a {ipAddress}")
+                ProcessStartInfo pro = new("cmd", $"/C arp -a {ipAddress}")
                 {
                     RedirectStandardOutput = true,
                     UseShellExecute = false,

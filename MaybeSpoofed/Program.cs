@@ -1,6 +1,6 @@
 ﻿using System.Text;
-using MaybeSpoofed_v2.Classes;
-using MaybeSpoofed_v2.Functions;
+using MaybeSpoofed.Classes;
+using MaybeSpoofed.Functions;
 using Newtonsoft.Json;
 
 namespace MaybeSpoofed
@@ -200,7 +200,7 @@ namespace MaybeSpoofed
                         if (network.Name.StartsWith("WAN Miniport"))
                             continue;
 
-                        if (network.Name.ToLower().Contains("vpn"))
+                        if (network.Name.Contains("vpn", StringComparison.CurrentCultureIgnoreCase))
                             continue;
 
                         if (SpoofedHardwareID.NetworkAdapters.FindAll(m => m.Mac == mac).Count > 0)
@@ -254,7 +254,7 @@ namespace MaybeSpoofed
 
                 if (SpoofedHardwareID.OSInformation != null)
                 {
-                    if (SpoofedHardwareID.OSInformation.Username.Contains("@"))
+                    if (SpoofedHardwareID.OSInformation.Username.Contains('@'))
                     {
                         Custom.WriteLine($"Windows username '{SpoofedHardwareID.OSInformation.Username}' contains email, should be offline account", ConsoleColor.Yellow);
                     }

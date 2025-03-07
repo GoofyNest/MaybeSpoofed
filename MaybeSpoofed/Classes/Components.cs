@@ -1,4 +1,4 @@
-﻿namespace MaybeSpoofed_v2.Classes
+﻿namespace MaybeSpoofed.Classes
 {
     public class Components
     {
@@ -69,7 +69,7 @@
             public string VersionInfo { get; set; } = string.Empty;
             public string Manufacturer { get; set; } = string.Empty;
             public string Activated { get; set; } = string.Empty;
-            public bool isTPMPResent { get; set; } = false;
+            public bool IsTPMPResent { get; set; } = false;
         }
 
         public class VideoController()
