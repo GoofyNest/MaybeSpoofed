@@ -438,40 +438,37 @@ namespace MaybeSpoofed_v2.Functions
             return null!;
         }
 
-        public static TrustedPlatFormModule GetTrustedPlatFormModule()
+        public static TrustedPlatFormModule? GetTrustedPlatFormModule()
         {
             try
             {
                 using var session = CimSession.Create(null);
-                // Query to get TPM information
-                var instances = session.QueryInstances("root\\cimv2", "WQL", "SELECT * FROM Wintr32_Tpm");
+                var instances = session.QueryInstances("root\\cimv2\\Security\\MicrosoftTpm", "WQL", "SELECT * FROM Win32_Tpm");
 
-                // If no TPM is found, instances will be empty
                 if (instances == null || !instances.Any())
                 {
                     Console.WriteLine("No TPM module found or it may be disabled in BIOS/UEFI.");
-                    return null!;
+                    return null;
                 }
 
                 foreach (var obj in instances)
                 {
-                    TrustedPlatFormModule _tpm = new()
+                    return new TrustedPlatFormModule
                     {
-                        ManufacturerID = obj.CimInstanceProperties["ManufacturerID"]?.Value.ToString() ?? string.Empty,
-                        ManufacturerVersion = obj.CimInstanceProperties["ManufacturerVersion"]?.Value.ToString() ?? string.Empty,
-                        Version = obj.CimInstanceProperties["Version"]?.Value.ToString() ?? string.Empty,
-                        VersionInfo = obj.CimInstanceProperties["VersionInfo"]?.Value.ToString() ?? string.Empty,
+                        ManufacturerID = obj.CimInstanceProperties["ManufacturerID"]?.Value?.ToString() ?? string.Empty,
+                        ManufacturerVersion = obj.CimInstanceProperties["ManufacturerVersion"]?.Value?.ToString() ?? string.Empty,
+                        Version = obj.CimInstanceProperties["SpecVersion"]?.Value?.ToString() ?? string.Empty,
                         isTPMPResent = true,
-                        Manufacturer = obj.CimInstanceProperties["Manufacturer"]?.Value.ToString() ?? string.Empty,
-                        Activated = obj.CimInstanceProperties["IsActivated"]?.Value.ToString() ?? string.Empty,
+                        Activated = obj.CimInstanceProperties["IsActivated_InitialValue"]?.Value?.ToString() ?? string.Empty
                     };
-
-                    return _tpm;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving TPM information: {ex.Message}");
+            }
 
-            return null!;
+            return null;
         }
 
         public static List<VideoController> GetVideoControllers()
