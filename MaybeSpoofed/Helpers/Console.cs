@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MaybeSpoofed
+namespace MaybeSpoofed.Helpers
 {
     public static class Custom
     {
@@ -10,8 +10,11 @@ namespace MaybeSpoofed
             switch (color)
             {
                 case ConsoleColor.Yellow:
+                    prefix = "[HINTS] ";
+                    break;
+
                 case ConsoleColor.DarkYellow:
-                    prefix = "[WARN] ";
+                    prefix = "[NOT SPOOFED] ";
                     break;
 
                 case ConsoleColor.Magenta:
@@ -20,7 +23,7 @@ namespace MaybeSpoofed
                     break;
 
                 case ConsoleColor.Red:
-                    prefix = "[CAUSE BANS] ";
+                    prefix = "[NOT SPOOFED] ";
                     break;
 
                 case ConsoleColor.DarkRed:

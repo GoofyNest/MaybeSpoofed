@@ -2,7 +2,7 @@
 {
     public class Components
     {
-        public string ProgramVersion { get; set; } = "v0.2";
+        public string ProgramVersion { get; set; } = "v0.5";
         public System SystemInformation { get; set; } = null!;
 
         public OperatingSystem OSInformation { get; set; } = null!;
@@ -20,6 +20,8 @@
         public List<NetworkAdapter> NetworkAdapters { get; set; } = [];
 
         public List<VideoController> GPUs { get; set; } = [];
+
+        public List<Partition> Partitions { get; set; } = [];
 
         public List<Storage> DiskDrives { get; set; } = [];
 
@@ -58,6 +60,18 @@
             public string Username { get; set; } = string.Empty;
             public string SerialNumber { get; set; } = string.Empty;
             public bool SecureBoot { get; set; } = false;
+
+            public string MachineID { get; set; } = string.Empty;
+            public string MachineGuid { get; set; } = string.Empty;
+            public string ProductID { get; set; } = string.Empty;
+            public string InstallDate { get; set; } = string.Empty;
+            public List<UsernameTable> SIDs { get; set; } = [];
+        }
+
+        public class UsernameTable()
+        {
+            public string Username { get; set; } = string.Empty;
+            public string SID { get; set; } = string.Empty;
         }
 
         public class BluetoothDevice()
@@ -135,6 +149,12 @@
             public string Manufacturer { get; set; } = string.Empty;
             public int BytesPerSector { get; set; } = 0;
             public string FirmwareRevision { get; set; } = string.Empty;
+        }
+
+        public class Partition()
+        {
+            public string DeviceID { get; set; } = string.Empty;
+            public string SerialNumber { get; set; } = string.Empty;
         }
 
         public class NetworkAdapter()

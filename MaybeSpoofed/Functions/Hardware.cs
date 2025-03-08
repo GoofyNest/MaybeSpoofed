@@ -1,10 +1,12 @@
 ﻿using System.Diagnostics;
+using System.Management;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using MaybeSpoofed.Classes;
 using Microsoft.Management.Infrastructure;
 using Microsoft.Win32;
 using static MaybeSpoofed.Classes.Components;
+using MaybeSpoofed.Helpers;
 
 namespace MaybeSpoofed.Functions
 {
@@ -12,6 +14,8 @@ namespace MaybeSpoofed.Functions
     {
         [GeneratedRegex(@"(\d+\.\d+\.\d+\.\d+)\s+([a-fA-F0-9:-]{17})", RegexOptions.IgnoreCase)]
         private static partial Regex ArpEntryRegex();
+
+        private static Components HardwareID = new();
 
         public static readonly Dictionary<string, string> ManufacturerMap = new()
         {
@@ -22,7 +26,7 @@ namespace MaybeSpoofed.Functions
 
         public static Components GetHardwareID()
         {
-            Components _hwid = new()
+            HardwareID = new()
             {
                 SystemInformation = GetSystemInformation(),
                 OSInformation = GetOperatingSystem(),
@@ -37,10 +41,13 @@ namespace MaybeSpoofed.Functions
                 DiskDrives = GetHardDrives(),
                 NetworkAdapters = GetNetworkAdapters(),
                 NearbyDevices = GetAllArpEntries(),
-                WindowsFastStartup = GetWindowsFastStartup()
+                WindowsFastStartup = GetWindowsFastStartup(),
+                Partitions = GetPartitions()
             };
 
-            return _hwid;
+            GetSystemIdentifiers();
+
+            return HardwareID;
         }
 
         public static bool GetWindowsFastStartup()
@@ -124,14 +131,36 @@ namespace MaybeSpoofed.Functions
             return null!;
         }
 
-        public static List<Components.Storage> GetHardDrives()
+        public static List<Components.Partition> GetPartitions()
         {
-            Custom.WriteLine($"Query -> Win32_DiskDrive", ConsoleColor.Cyan);
-
-            List<Components.Storage> _disks = [];
-
+            List<Components.Partition> _partitions = [];
             try
             {
+                using var session = CimSession.Create(null);
+                Custom.WriteLine($"Query -> Win32_LogicalDisk", ConsoleColor.Cyan);
+                // Get partition serial numbers
+                foreach (var volume in session.QueryInstances("root\\cimv2", "WQL", "SELECT * FROM Win32_LogicalDisk"))
+                {
+                    string volumeSerialNumber = volume.CimInstanceProperties["VolumeSerialNumber"]?.Value?.ToString() ?? string.Empty;
+                    string volumeDeviceID = volume.CimInstanceProperties["DeviceID"]?.Value?.ToString() ?? string.Empty;
+
+                    _partitions.Add(new() { DeviceID = volumeDeviceID, SerialNumber = volumeSerialNumber });
+
+                }
+                return _partitions;
+            }
+            catch { Custom.WriteLine($"Query -> Win32_LogicalDisk", ConsoleColor.DarkRed); }
+
+            return null!;
+        }
+
+        public static List<Components.Storage> GetHardDrives()
+        {
+            List<Components.Storage> _disks = [];
+            try 
+            {
+                Custom.WriteLine($"Query -> Win32_DiskDrive", ConsoleColor.Cyan);
+
                 using var session = CimSession.Create(null);
                 // Query to get all disk drive information
                 foreach (var obj in session.QueryInstances("root\\cimv2", "WQL", "SELECT * FROM Win32_DiskDrive"))
@@ -139,9 +168,12 @@ namespace MaybeSpoofed.Functions
                     string Partitions = obj.CimInstanceProperties["Partitions"]?.Value.ToString() ?? "0";
                     string BytesPerSector = obj.CimInstanceProperties["BytesPerSector"]?.Value.ToString() ?? "0";
 
+                    // Get DeviceID (to correlate with logical disk)
+                    string deviceID = obj.CimInstanceProperties["DeviceID"]?.Value.ToString() ?? string.Empty;
+
                     Components.Storage Disk = new()
                     {
-                        DeviceID = obj.CimInstanceProperties["DeviceID"]?.Value.ToString() ?? string.Empty,
+                        DeviceID = deviceID,
                         Model = obj.CimInstanceProperties["Model"]?.Value.ToString() ?? string.Empty,
                         SerialNumber = obj.CimInstanceProperties["SerialNumber"]?.Value.ToString() ?? string.Empty,
                         Size = obj.CimInstanceProperties["Size"]?.Value.ToString() ?? string.Empty,
@@ -159,7 +191,7 @@ namespace MaybeSpoofed.Functions
 
                 return _disks;
             }
-            catch { Custom.WriteLine($"Query -> Win32_DiskDrive", ConsoleColor.DarkRed); }
+            catch(Exception ex) { Custom.WriteLine($"Query -> Win32_DiskDrive {ex.Message}", ConsoleColor.DarkRed); }
 
             return null!;
         }
@@ -544,7 +576,7 @@ namespace MaybeSpoofed.Functions
         public static string ConvertToString(ushort[]? data)
         {
             if (data == null) return string.Empty;
-            return new string(data.Select(c => (char)c).ToArray()).TrimEnd('\0');
+            return new string([.. data.Select(c => (char)c)]).TrimEnd('\0');
         }
 
         public static string ExtractValue(string output, string label)
@@ -591,7 +623,7 @@ namespace MaybeSpoofed.Functions
                 // Use Regex to find all matches in the output
                 MatchCollection matches = arpEntryPattern.Matches(output);
 
-                Custom.WriteLine($"Found ARP entries: {matches.Count}", ConsoleColor.DarkMagenta);
+                //Custom.WriteLine($"Found ARP entries: {matches.Count}", ConsoleColor.DarkMagenta);
 
                 foreach (Match match in matches)
                 {
@@ -608,7 +640,7 @@ namespace MaybeSpoofed.Functions
                     if (physicalAddress == "ff-ff-ff-ff-ff-ff")
                         continue;
 
-                    Custom.WriteLine($"NearByDevice -> {internetAddress} {physicalAddress}", ConsoleColor.DarkMagenta);
+                    //Custom.WriteLine($"NearByDevice -> {internetAddress} {physicalAddress}", ConsoleColor.DarkMagenta);
 
                     routerMacs.Add(new ArpTable() { Address = internetAddress, Mac = physicalAddress });
                 }
@@ -622,6 +654,40 @@ namespace MaybeSpoofed.Functions
 
             Custom.WriteLine("Command -> Maybe permission error?", ConsoleColor.DarkRed);
             return null!;
+        }
+
+        public static void GetSystemIdentifiers()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // 1. Get MachineId (from SQMClient)
+                string machineId = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\SQMClient", "MachineId", null)?.ToString() ?? string.Empty;
+                HardwareID.OSInformation.MachineID = machineId;
+
+                // 2. Get MachineGuid (from Cryptography)
+                string machineGuid = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography", "MachineGuid", null)?.ToString() ?? string.Empty;
+                HardwareID.OSInformation.MachineGuid = machineGuid;
+
+                // 3. Get ProductId (from Windows NT CurrentVersion)
+                string productId = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "ProductId", null)?.ToString() ?? string.Empty;
+                HardwareID.OSInformation.ProductID = productId;
+
+                string installDate = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "InstallDate", null)?.ToString() ?? "0";
+                HardwareID.OSInformation.InstallDate = installDate;
+
+                // 4. Get SID (from User Account)
+                ManagementObjectSearcher searcher = new("SELECT Name, SID FROM Win32_UserAccount");
+                foreach (ManagementObject obj in searcher.Get().Cast<ManagementObject>())
+                {
+                    string userName = obj["Name"]?.ToString() ?? string.Empty;
+                    string userSid = obj["SID"]?.ToString() ?? string.Empty;
+
+                    if (string.IsNullOrWhiteSpace(userSid))
+                        continue;
+
+                    HardwareID.OSInformation.SIDs.Add(new UsernameTable() { Username = userName, SID = userSid });
+                }
+            }
         }
     }
 }
