@@ -268,7 +268,7 @@ namespace MaybeSpoofed
                         {
                             if (SpoofedHardwareID.NearbyDevices.FindAll(m => m.Mac == arp.Mac).Count > 0)
                             {
-                                Custom.WriteLine($"Nearby device '{arp.Address}':'{arp.Mac}' not spoofed", ConsoleColor.Red);
+                                Custom.WriteLine($"[Cause ban on Fortnite] Nearby device '{arp.Address}':'{arp.Mac}' not spoofed", ConsoleColor.Yellow);
                             }
                         }
                     }
