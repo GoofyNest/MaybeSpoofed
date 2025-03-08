@@ -36,7 +36,7 @@ namespace MaybeSpoofed.Functions
                 Ram = GetRam(),
                 DiskDrives = GetHardDrives(),
                 NetworkAdapters = GetNetworkAdapters(),
-                RouterMacs = GetAllArpEntries(),
+                NearbyDevices = GetAllArpEntries(),
                 WindowsFastStartup = GetWindowsFastStartup()
             };
 
@@ -45,6 +45,8 @@ namespace MaybeSpoofed.Functions
 
         public static bool GetWindowsFastStartup()
         {
+            Custom.WriteLine($"Regedit -> SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power", ConsoleColor.Cyan);
+
             // Access the registry key where the Fast Startup setting is stored
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -66,18 +68,33 @@ namespace MaybeSpoofed.Functions
                         }
                     }
                 }
-                catch { }
+                catch { Custom.WriteLine($"Regedit -> SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power", ConsoleColor.DarkRed); }
             }
             return false;
         }
 
         public static List<Components.NetworkAdapter> GetNetworkAdapters()
         {
+            Custom.WriteLine($"Query -> Win32_NetworkAdapter", ConsoleColor.Cyan);
+
             List<Components.NetworkAdapter> _networkadapters = [];
 
             try
             {
                 using var session = CimSession.Create(null);
+
+                // Dictionary to map network adapter Index to SettingID (GUID)
+                Dictionary<uint, string> adapterGuids = [];
+
+                // Query to get the GUIDs from Win32_NetworkAdapterConfiguration
+                foreach (var obj in session.QueryInstances("root\\cimv2", "WQL", "SELECT Index, SettingID FROM Win32_NetworkAdapterConfiguration"))
+                {
+                    if (obj.CimInstanceProperties["Index"]?.Value is uint index &&
+                        obj.CimInstanceProperties["SettingID"]?.Value is string settingId)
+                    {
+                        adapterGuids[index] = settingId;
+                    }
+                }
 
                 // Query to get network adapter information
                 foreach (var obj in session.QueryInstances("root\\cimv2", "WQL", "SELECT * FROM Win32_NetworkAdapter"))
@@ -87,12 +104,15 @@ namespace MaybeSpoofed.Functions
                     if (string.IsNullOrEmpty(macAddress))
                         continue; // Skip this adapter if MAC address is not available
 
+                    uint? index = obj.CimInstanceProperties["Index"]?.Value as uint?;
+
                     Components.NetworkAdapter adapter = new()
                     {
                         Name = obj.CimInstanceProperties["Name"]?.Value.ToString() ?? string.Empty,
                         Mac = macAddress,
                         Type = obj.CimInstanceProperties["AdapterType"]?.Value.ToString() ?? string.Empty,
                         Manufacturer = obj.CimInstanceProperties["Manufacturer"]?.Value.ToString() ?? string.Empty,
+                        Guid = index.HasValue && adapterGuids.TryGetValue(index.Value, out string? value) ? value : string.Empty
                     };
 
                     _networkadapters.Add(adapter);
@@ -100,12 +120,14 @@ namespace MaybeSpoofed.Functions
 
                 return _networkadapters;
             }
-            catch { }
+            catch { Custom.WriteLine($"Query -> Win32_NetworkAdapter", ConsoleColor.DarkRed); }
             return null!;
         }
 
         public static List<Components.Storage> GetHardDrives()
         {
+            Custom.WriteLine($"Query -> Win32_DiskDrive", ConsoleColor.Cyan);
+
             List<Components.Storage> _disks = [];
 
             try
@@ -137,13 +159,14 @@ namespace MaybeSpoofed.Functions
 
                 return _disks;
             }
-            catch { }
+            catch { Custom.WriteLine($"Query -> Win32_DiskDrive", ConsoleColor.DarkRed); }
 
             return null!;
         }
 
         public static List<Components.PhysicalMemory> GetRam()
         {
+            Custom.WriteLine($"Query -> Win32_PhysicalMemory", ConsoleColor.Cyan);
             List<Components.PhysicalMemory> _ram = [];
 
             try
@@ -168,13 +191,14 @@ namespace MaybeSpoofed.Functions
                 }
                 return _ram;
             }
-            catch { }
+            catch { Custom.WriteLine($"Query -> Win32_PhysicalMemory", ConsoleColor.DarkRed); }
 
             return null!;
         }
 
         public static Components.Bios GetBios()
         {
+            Custom.WriteLine($"Query -> Win32_BIOS", ConsoleColor.Cyan);
             try
             {
                 using var session = CimSession.Create(null); // Local session
@@ -203,12 +227,13 @@ namespace MaybeSpoofed.Functions
                     return Bios;
                 }
             }
-            catch { }
+            catch { Custom.WriteLine($"Query -> Win32_BIOS", ConsoleColor.DarkRed); }
             return null!;
         }
 
         public static Components.Motherboard GetMotherboard()
         {
+            Custom.WriteLine($"Query -> Win32_BaseBoard", ConsoleColor.Cyan);
             try
             {
                 using var session = CimSession.Create(null); // Local session
@@ -226,12 +251,14 @@ namespace MaybeSpoofed.Functions
                     return motherboard;
                 }
             }
-            catch { }
+            catch { Custom.WriteLine($"Query -> Win32_BaseBoard", ConsoleColor.DarkRed); }
             return null!;
         }
 
         public static List<Components.Processor> GetCPUs()
         {
+            Custom.WriteLine($"Query -> Win32_Processor", ConsoleColor.Cyan);
+
             List<Components.Processor> _cpus = [];
 
             try
@@ -263,13 +290,15 @@ namespace MaybeSpoofed.Functions
                 }
                 return _cpus;
             }
-            catch { }
+            catch { Custom.WriteLine($"Query -> Win32_Processor", ConsoleColor.DarkRed);  }
 
             return null!;
         }
 
         public static Components.OperatingSystem GetOperatingSystem()
         {
+            Custom.WriteLine($"Query -> Win32_OperatingSystem", ConsoleColor.Cyan);
+
             try
             {
                 using var session = CimSession.Create(null);
@@ -304,13 +333,15 @@ namespace MaybeSpoofed.Functions
                     return OSInformation;
                 }
             }
-            catch { }
+            catch { Custom.WriteLine($"Query -> Win32_OperatingSystem", ConsoleColor.DarkRed); }
 
             return null!;
         }
         
         public static Components.System GetSystemInformation()
         {
+            Custom.WriteLine($"Query -> Win32_ComputerSystemProduct", ConsoleColor.Cyan);
+
             try
             {
                 using var session = CimSession.Create(null);
@@ -328,13 +359,15 @@ namespace MaybeSpoofed.Functions
                     return SystemInformation;
                 }
             }
-            catch { }
+            catch { Custom.WriteLine($"Query -> Win32_ComputerSystemProduct", ConsoleColor.DarkRed); }
 
             return null!;
         }
 
         public static List<Components.Monitor> GetMonitors()
         {
+            Custom.WriteLine($"Query -> WmiMonitorID", ConsoleColor.Cyan);
+
             List<Components.Monitor> _monitors = [];
 
             try
@@ -367,13 +400,15 @@ namespace MaybeSpoofed.Functions
 
                 return _monitors;
             }
-            catch { }
+            catch { Custom.WriteLine($"Query -> WmiMonitorID", ConsoleColor.DarkRed); }
 
             return null!;
         }
 
         public static List<BluetoothDevice> GetBluetoothDevices()
         {
+            Custom.WriteLine($"Query -> Win32_PnPEntity %Bluetooth%", ConsoleColor.Cyan);
+
             List<BluetoothDevice> _bluetooth = [];
 
             try
@@ -396,13 +431,15 @@ namespace MaybeSpoofed.Functions
                 }
                 return _bluetooth;
             }
-            catch { }
+            catch { Custom.WriteLine($"Query -> Win32_PnPEntity", ConsoleColor.DarkRed); }
 
             return null!;
         }
 
         public static TrustedPlatFormModule GetTrustedPlatFormModule()
         {
+            Custom.WriteLine($"Query -> Win32_Tpm", ConsoleColor.Cyan);
+
             try
             {
                 using var session = CimSession.Create(null);
@@ -410,7 +447,7 @@ namespace MaybeSpoofed.Functions
 
                 if (instances == null || !instances.Any())
                 {
-                    Custom.WriteLine("No TPM module found or it may be disabled in BIOS/UEFI.", ConsoleColor.Green);
+                    Custom.WriteLine("Win32_Tpm is disabled", ConsoleColor.Cyan);
                     return null!;
                 }
 
@@ -428,7 +465,7 @@ namespace MaybeSpoofed.Functions
             }
             catch (Exception ex)
             {
-                Custom.WriteLine($"Error retrieving TPM information: {ex.Message}", ConsoleColor.Red);
+                Custom.WriteLine($"Query -> Win32_Tpm: {ex.Message}", ConsoleColor.DarkRed);
             }
 
             return null!;
@@ -437,6 +474,8 @@ namespace MaybeSpoofed.Functions
         public static List<VideoController> GetVideoControllers()
         {
             List<VideoController> _gpus = [];
+
+            Custom.WriteLine($"Query -> Win32_VideoController", ConsoleColor.Cyan);
 
             try
             {
@@ -454,7 +493,7 @@ namespace MaybeSpoofed.Functions
 
                     if (videoController.Name.Contains("NVIDIA"))
                     {
-                        Custom.WriteLine($"Supported GPU found {videoController.Name}", ConsoleColor.Green);
+                        Custom.WriteLine($"Supported GPU Found -> {videoController.Name}", ConsoleColor.Cyan);
 
                         try
                         {
@@ -468,6 +507,7 @@ namespace MaybeSpoofed.Functions
                                 CreateNoWindow = true
                             };
 
+                            Custom.WriteLine($"Command -> nvidia-smi", ConsoleColor.Cyan);
                             using Process? process = Process.Start(startInfo);
                             if (process != null)
                             {
@@ -483,12 +523,12 @@ namespace MaybeSpoofed.Functions
                         }
                         catch
                         {
-                            Custom.WriteLine($"Error grabbing information from nvidia-smi", ConsoleColor.Red);
+                            Custom.WriteLine($"Command -> nvidia-smi", ConsoleColor.DarkRed);
                         }
                     }
                     else
                     {
-                        Custom.WriteLine($"Not supported GPU found {videoController.Name}", ConsoleColor.Red);
+                        Custom.WriteLine($"Not supported GPU found -> {videoController.Name}", ConsoleColor.DarkRed);
                     }
 
                     _gpus.Add(videoController);
@@ -521,12 +561,13 @@ namespace MaybeSpoofed.Functions
             return string.IsNullOrEmpty(value) ? string.Empty : value;
         }
 
-        public static List<string> GetAllArpEntries()
+        public static List<ArpTable> GetAllArpEntries()
         {
-            List<string> routerMacs = [];
+            List<ArpTable> routerMacs = [];
 
             try
             {
+                Custom.WriteLine($"Command -> arp -a", ConsoleColor.Cyan);
                 ProcessStartInfo pro = new("cmd", "/C arp -a")
                 {
                     RedirectStandardOutput = true,
@@ -537,7 +578,7 @@ namespace MaybeSpoofed.Functions
                 using Process? process = Process.Start(pro);
                 if (process == null)
                 {
-                    Custom.WriteLine("GetAllArpEntries - Maybe permission error?", ConsoleColor.Red);
+                    Custom.WriteLine("Command -> Maybe permission error?", ConsoleColor.DarkRed);
                     return null!;
                 }
 
@@ -550,7 +591,7 @@ namespace MaybeSpoofed.Functions
                 // Use Regex to find all matches in the output
                 MatchCollection matches = arpEntryPattern.Matches(output);
 
-                Custom.WriteLine($"GetAllArpEntries matches: {matches.Count}", ConsoleColor.DarkMagenta);
+                Custom.WriteLine($"Found ARP entries: {matches.Count}", ConsoleColor.DarkMagenta);
 
                 foreach (Match match in matches)
                 {
@@ -567,58 +608,19 @@ namespace MaybeSpoofed.Functions
                     if (physicalAddress == "ff-ff-ff-ff-ff-ff")
                         continue;
 
-                    Custom.WriteLine($"GetAllArpEntries found {physicalAddress}");
-                    routerMacs.Add(physicalAddress);
+                    Custom.WriteLine($"NearByDevice -> {internetAddress} {physicalAddress}", ConsoleColor.DarkMagenta);
+
+                    routerMacs.Add(new ArpTable() { Address = internetAddress, Mac = physicalAddress });
                 }
 
                 return routerMacs;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error while retrieving ARP entries: {ex.Message}");
+                Console.WriteLine($"Command -> ARP: {ex.Message}");
             }
 
-            Custom.WriteLine("GetAllArpEntries is null - Maybe permission error?", ConsoleColor.Red);
-
-            return null!;
-        }
-
-        public static string GetMacAddressFromArpCache(string ipAddress)
-        {
-            try
-            {
-                // Run the "arp -a" command and capture the output
-                ProcessStartInfo pro = new("cmd", $"/C arp -a {ipAddress}")
-                {
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                using Process? process = Process.Start(pro);
-
-                if (process == null) return null!;
-
-                using var reader = process.StandardOutput;
-                string output = reader.ReadToEnd();
-                string[] lines = output.Split(Environment.NewLine);
-                foreach (string line in lines)
-                {
-                    // Look for the line containing the MAC address
-                    if (line.Contains(ipAddress))
-                    {
-                        var columns = line.Split([' '], StringSplitOptions.RemoveEmptyEntries);
-                        if (columns.Length >= 3)
-                        {
-                            return columns[1]; // MAC Address is in the second column
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error while retrieving MAC address: {ex.Message}");
-            }
+            Custom.WriteLine("Command -> Maybe permission error?", ConsoleColor.DarkRed);
             return null!;
         }
     }

@@ -4,6 +4,8 @@ using MaybeSpoofed.Functions;
 using Newtonsoft.Json;
 using System.Security.Principal;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Diagnostics;
 
 namespace MaybeSpoofed
 {
@@ -47,15 +49,18 @@ namespace MaybeSpoofed
             if (!Directory.Exists("config"))
                 Directory.CreateDirectory("config");
 
-            if (!IsAdministrator())
+            if (!Debugger.IsAttached)
             {
-                Custom.WriteLine("Warning: This application requires administrator privileges.", ConsoleColor.Yellow);
-                Custom.WriteLine("Please restart it as an administrator.", ConsoleColor.Yellow);
+                if (!IsAdministrator())
+                {
+                    Custom.WriteLine("Warning: This application requires administrator privileges.", ConsoleColor.Yellow);
+                    Custom.WriteLine("Please restart it as an administrator.", ConsoleColor.Yellow);
 
-                Console.ReadLine();
-                Console.ReadLine();
+                    Console.ReadLine();
+                    Console.ReadLine();
 
-                return;
+                    return;
+                }
             }
 
 
@@ -77,7 +82,7 @@ namespace MaybeSpoofed
                     return;
                 }
 
-                if (tempSettings.ProgramVersion != "v0.1")
+                if (tempSettings.ProgramVersion != "v0.2")
                 {
                     Custom.WriteLine("Outdated program json, please delete config folder and restart application", ConsoleColor.Red);
                     Console.ReadLine();
@@ -221,6 +226,11 @@ namespace MaybeSpoofed
                         {
                             Custom.WriteLine($"Network '{network.Name}' Mac '{mac}' not spoofed", ConsoleColor.Red);
                         }
+
+                        if(SpoofedHardwareID.NetworkAdapters.FindAll(m => m.Guid == network.Guid).Count > 0)
+                        {
+                            Custom.WriteLine($"Network '{network.Name}' Guid '{network.Guid}' not spoofed", ConsoleColor.Red);
+                        }
                     }
                 }
                 else
@@ -244,27 +254,27 @@ namespace MaybeSpoofed
                 else
                     Custom.WriteLine($"Error grabbing Monitors", ConsoleColor.DarkRed);
 
-                if (HardwareID.RouterMacs != null)
+                if (HardwareID.NearbyDevices != null)
                 {
-                    foreach (var mac in HardwareID.RouterMacs)
+                    foreach (var arp in HardwareID.NearbyDevices)
                     {
-                        if (string.IsNullOrEmpty(mac))
+                        if (string.IsNullOrEmpty(arp.Mac))
                             continue;
 
-                        if (mac.Length < 3)
+                        if (arp.Mac.Length < 3)
                             continue;
 
-                        if (SpoofedHardwareID.RouterMacs != null)
+                        if (SpoofedHardwareID.NearbyDevices != null)
                         {
-                            if (SpoofedHardwareID.RouterMacs.Contains(mac))
+                            if (SpoofedHardwareID.NearbyDevices.FindAll(m => m.Mac == arp.Mac).Count > 0)
                             {
-                                Custom.WriteLine($"Router Mac '{mac}' not spoofed", ConsoleColor.Yellow);
+                                Custom.WriteLine($"Nearby device '{arp.Address}':'{arp.Mac}' not spoofed", ConsoleColor.Red);
                             }
                         }
                     }
                 }
                 else
-                    Custom.WriteLine($"Error grabbing RouterMacs", ConsoleColor.DarkRed);
+                    Custom.WriteLine($"Error grabbing Nearby devices", ConsoleColor.DarkRed);
 
                 if (SpoofedHardwareID.OSInformation != null)
                 {

@@ -2,7 +2,7 @@
 {
     public class Components
     {
-        public string ProgramVersion { get; set; } = "v0.1";
+        public string ProgramVersion { get; set; } = "v0.2";
         public System SystemInformation { get; set; } = null!;
 
         public OperatingSystem OSInformation { get; set; } = null!;
@@ -15,7 +15,7 @@
 
         public TrustedPlatFormModule TPM { get; set; } = null!;
 
-        public List<string> RouterMacs { get; set; } = [];
+        public List<ArpTable> NearbyDevices { get; set; } = null!;
 
         public List<NetworkAdapter> NetworkAdapters { get; set; } = [];
 
@@ -30,6 +30,12 @@
         public List<BluetoothDevice> BluetoothDevices { get; set; } = [];
 
         public bool WindowsFastStartup { get; set; } = false;
+
+        public class ArpTable()
+        {
+            public string Address { get; set; } = string.Empty;
+            public string Mac { get; set; } = string.Empty;
+        }
 
         public class System()
         {
@@ -137,6 +143,7 @@
             public string Mac { get; set; } = string.Empty;
             public string Type { get; set; } = string.Empty;
             public string Manufacturer { get; set; } = string.Empty;
+            public string Guid { get; set; } = string.Empty;
         }
 
         public class IPConfig()
