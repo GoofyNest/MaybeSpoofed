@@ -21,6 +21,7 @@ https://dotnet.microsoft.com/en-us/download
 - Disk drive serials not being spoofed
 - NVIDIA GPU UUID not spoofed
 - Network MAC not spoofed
+- Network Guid not spoofed
 - Monitor serials not being spoofed
 - Router MAC not spoofed
 - Windows username not offline account
