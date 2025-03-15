@@ -13,50 +13,6 @@ namespace MaybeSpoofed
     {
         static void Main()
         {
-            
-
-            /*
-                Windows unique identifiers:
-                - (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\SQMClient").MachineId
-                - (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Cryptography").MachineGuid
-                - (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").ProductId
-                - wmic useraccount get name,sid
-                
-                
-
-
-
-                EasyAntiCheat hardware id packet:
-                EAC Hardware packet for GPU
-                GPU NAME.DRIVER DATE.(Looks like UUID but has changed?)
-
-                SystemInformation.UUID
-                BIOS.Manufacturer
-                BIOS.ReleaseDate
-                SystemInformation.Vendor
-                SystemInformation.ProductName
-                DiskDrives.Model => Get-PhysicalDisk | Select-Object DeviceId, MediaType, Model, FriendlyName
-                DiskDrives.SerialNumber
-                CPUs.Name
-                GPUs.Name
-                GPUs Drive date
-                GPUs UUID?
-                NetworkAdapters.Name
-                NetworkAdapters driver version
-                NetworkAdapter firmware version
-                64-bit operating system (i guess)
-                NetworkAdapter.MAC
-                NetworkAdapter.InterfaceGuid => Get-NetAdapter | Select-Object Name, InterfaceGuid
-                SystemInformation.SystemSerialNumber
-                MotherboardInformation.SerialNumber
-                Either The following
-                    - Get-ComputerInfo | Format-List * (ConfigOptions)
-                    - Get-CimInstance Win32_SystemEnclosure | Format-List * (SerialNumber, Version, SMBIOSAssetTag)
-
-                SystemFamily => - Get-ItemProperty -Path "HKLM:\HARDWARE\DESCRIPTION\System\BIOS"
-                (To be filled by O.E.M) aka 000000_000000 if not existing
-                
-            */
             if (!Directory.Exists("config"))
                 Directory.CreateDirectory("config");
 
@@ -183,255 +139,310 @@ namespace MaybeSpoofed
                 Custom.WriteLine("Hardware result:");
                 Custom.WriteLine("---------------------------------------");
 
-                if(SpoofedHardwareID.TPM != null)
+                try
                 {
-                    Custom.WriteLine("Trusted platform module(TPM) is enabled, please disable it in BIOS", ConsoleColor.Red);
-                }
-
-                if (SpoofedHardwareID.BluetoothDevices != null)
-                {
-                    if (SpoofedHardwareID.BluetoothDevices.Count > 0)
+                    if (SpoofedHardwareID.TPM != null)
                     {
-                        Custom.WriteLine("Bluetooth card is present, please disable it in BIOS", ConsoleColor.Red);
+                        Custom.WriteLine("Trusted platform module(TPM) is enabled, please disable it in BIOS", ConsoleColor.Red);
                     }
                 }
+                catch(Exception ex) { Custom.WriteLine($"{ex.Message}", ConsoleColor.Red); }
 
-                if(SpoofedHardwareID.WindowsFastStartup)
+                try
                 {
-                    Custom.WriteLine("Windows fast startup is enabled, can lead to bans if using `Shutdown pc`", ConsoleColor.Yellow);
-                }
-
-                if (HardwareID.MotherboardInformation != null)
-                {
-                    if (HardwareID.MotherboardInformation.SerialNumber == SpoofedHardwareID.MotherboardInformation.SerialNumber)
+                    if (SpoofedHardwareID.BluetoothDevices != null)
                     {
-                        if(SpoofedHardwareID.MotherboardInformation.SerialNumber.Equals("default string", StringComparison.CurrentCultureIgnoreCase))
+                        if (SpoofedHardwareID.BluetoothDevices.Count > 0)
                         {
-                            Custom.WriteLine($"We detected that your Motherboard Serial is Default String", ConsoleColor.DarkYellow);
-                            Custom.WriteLine($"This could be normal but normally indicates that you used a Permanent spoofer", ConsoleColor.DarkYellow);
-                            Custom.WriteLine($"If you used a Perm spoofer, temp spoofers might not work for you", ConsoleColor.DarkYellow);
-                        }
-                        else
-                            Custom.WriteLine($"[Baseboard] {SpoofedHardwareID.MotherboardInformation.Product} => [{SpoofedHardwareID.MotherboardInformation.SerialNumber}]", ConsoleColor.Red);
-                    }
-                }
-                else
-                    Custom.WriteLine($"Error grabbing MotherboardInformation", ConsoleColor.DarkRed);
-
-                
-
-                if (HardwareID.SystemInformation != null)
-                {
-                    if (HardwareID.SystemInformation.UUID == SpoofedHardwareID.SystemInformation.UUID)
-                    {
-                        Custom.WriteLine($"[System] Uuid => {SpoofedHardwareID.SystemInformation.UUID}", ConsoleColor.Red);
-                    }
-                }
-                else
-                    Custom.WriteLine($"Error grabbing SystemInformation", ConsoleColor.DarkRed);
-
-
-                if (HardwareID.Ram != null)
-                {
-                    foreach (var ram in HardwareID.Ram)
-                    {
-                        var serial = ram.SerialNumber;
-
-                        if (serial == "00000000")
-                            continue;
-
-                        if (SpoofedHardwareID.Ram.FindAll(m => m.SerialNumber == serial).Count > 0)
-                        {
-                            Custom.WriteLine($"[Ram] {ram.Location} => {serial}", ConsoleColor.Red);
-                        }
-                    }
-
-                    
-                }
-                else
-                    Custom.WriteLine($"Error grabbing Ram", ConsoleColor.DarkRed);
-
-                if (HardwareID.DiskDrives != null)
-                {
-                    foreach (var disk in HardwareID.DiskDrives)
-                    {
-                        var serial = disk.SerialNumber;
-
-                        if (SpoofedHardwareID.DiskDrives.FindAll(m => m.SerialNumber == serial).Count > 0)
-                        {
-                            Custom.WriteLine($"[Disk] {disk.Model} => {serial}", ConsoleColor.Red);
+                            Custom.WriteLine("Bluetooth card is present, please disable it in BIOS", ConsoleColor.Red);
                         }
                     }
                 }
-                else
-                    Custom.WriteLine($"Error grabbing DiskDrives", ConsoleColor.DarkRed);
+                catch (Exception ex) { Custom.WriteLine($"{ex.Message}", ConsoleColor.Red); }
 
-                if (HardwareID.GPUs != null)
+                try
                 {
-                    foreach (var gpu in HardwareID.GPUs)
+                    if (SpoofedHardwareID.WindowsFastStartup)
                     {
-                        var serial = gpu.SerialNumber;
-                        var UUID = gpu.UUID;
+                        Custom.WriteLine("Windows fast startup is enabled, can lead to bans if using `Shutdown pc`", ConsoleColor.Yellow);
+                    }
+                }
+                catch (Exception ex) { Custom.WriteLine($"{ex.Message}", ConsoleColor.Red); }
 
-                        if (string.IsNullOrWhiteSpace(UUID))
+                try
+                {
+                    if (HardwareID.MotherboardInformation != null)
+                    {
+                        if (HardwareID.MotherboardInformation.SerialNumber == SpoofedHardwareID.MotherboardInformation.SerialNumber)
                         {
-                            Custom.WriteLine($"We dont support your GPU, trust your spoofer provider or check manually", ConsoleColor.DarkRed);
-                        }
-                        else
-                        {
-                            if (SpoofedHardwareID.GPUs.FindAll(m => m.UUID == UUID).Count > 0)
+                            if (SpoofedHardwareID.MotherboardInformation.SerialNumber.Equals("default string", StringComparison.CurrentCultureIgnoreCase))
                             {
-                                Custom.WriteLine($"[GPU] {gpu.Name}(UUID) => {UUID}", ConsoleColor.Red);
+                                Custom.WriteLine($"We detected that your Motherboard Serial is Default String", ConsoleColor.DarkYellow);
+                                Custom.WriteLine($"This could be normal but normally indicates that you used a Permanent spoofer", ConsoleColor.DarkYellow);
+                                Custom.WriteLine($"If you used a Perm spoofer, temp spoofers might not work for you", ConsoleColor.DarkYellow);
+                            }
+                            else
+                                Custom.WriteLine($"[Baseboard] {SpoofedHardwareID.MotherboardInformation.Product} => [{SpoofedHardwareID.MotherboardInformation.SerialNumber}]", ConsoleColor.Red);
+                        }
+                    }
+                    else
+                        Custom.WriteLine($"Error grabbing MotherboardInformation", ConsoleColor.DarkRed);
+                }
+                catch (Exception ex) { Custom.WriteLine($"{ex.Message}", ConsoleColor.Red); }
+
+                try
+                {
+
+
+                    if (HardwareID.SystemInformation != null)
+                    {
+                        if (HardwareID.SystemInformation.UUID == SpoofedHardwareID.SystemInformation.UUID)
+                        {
+                            Custom.WriteLine($"[System] Uuid => {SpoofedHardwareID.SystemInformation.UUID}", ConsoleColor.Red);
+                        }
+                    }
+                    else
+                        Custom.WriteLine($"Error grabbing SystemInformation", ConsoleColor.DarkRed);
+                }
+                catch (Exception ex) { Custom.WriteLine($"{ex.Message}", ConsoleColor.Red); }
+
+                try
+                {
+                    if (HardwareID.Ram != null)
+                    {
+                        foreach (var ram in HardwareID.Ram)
+                        {
+                            var serial = ram.SerialNumber;
+
+                            if (serial == "00000000")
+                                continue;
+
+                            if (SpoofedHardwareID.Ram.FindAll(m => m.SerialNumber == serial).Count > 0)
+                            {
+                                Custom.WriteLine($"[Ram] {ram.Location} => {serial}", ConsoleColor.Red);
+                            }
+                        }
+
+
+                    }
+                    else
+                        Custom.WriteLine($"Error grabbing Ram", ConsoleColor.DarkRed);
+                }
+                catch (Exception ex) { Custom.WriteLine($"{ex.Message}", ConsoleColor.Red); }
+
+                try
+                {
+                    if (HardwareID.DiskDrives != null)
+                    {
+                        foreach (var disk in HardwareID.DiskDrives)
+                        {
+                            var serial = disk.SerialNumber;
+
+                            if (SpoofedHardwareID.DiskDrives.FindAll(m => m.SerialNumber == serial).Count > 0)
+                            {
+                                Custom.WriteLine($"[Disk] {disk.Model} => {serial}", ConsoleColor.Red);
                             }
                         }
                     }
+                    else
+                        Custom.WriteLine($"Error grabbing DiskDrives", ConsoleColor.DarkRed);
                 }
-                else
-                    Custom.WriteLine($"Error grabbing GPUs", ConsoleColor.DarkRed);
+                catch (Exception ex) { Custom.WriteLine($"{ex.Message}", ConsoleColor.Red); }
 
-                if (HardwareID.NetworkAdapters != null)
+                try
                 {
-                    foreach (var network in HardwareID.NetworkAdapters)
+                    if (HardwareID.GPUs != null)
                     {
-                        var mac = network.Mac;
-
-                        if (network.Name.StartsWith("WAN Miniport"))
-                            continue;
-
-                        if (network.Name.Contains("vpn", StringComparison.CurrentCultureIgnoreCase))
-                            continue;
-
-                        if (SpoofedHardwareID.NetworkAdapters.FindAll(m => m.Mac == mac).Count > 0)
+                        foreach (var gpu in HardwareID.GPUs)
                         {
-                            Custom.WriteLine($"[Network] {network.Name}(Mac) => {mac}", ConsoleColor.Red);
-                        }
+                            var serial = gpu.SerialNumber;
+                            var UUID = gpu.UUID;
 
-                        if(SpoofedHardwareID.NetworkAdapters.FindAll(m => m.Guid == network.Guid).Count > 0)
-                        {
-                            Custom.WriteLine($"[Network] {network.Name}(Guid) => {network.Guid}", ConsoleColor.Red);
+                            if (string.IsNullOrWhiteSpace(UUID))
+                            {
+                                Custom.WriteLine($"We dont support your GPU, trust your spoofer provider or check manually", ConsoleColor.DarkRed);
+                            }
+                            else
+                            {
+                                if (SpoofedHardwareID.GPUs.FindAll(m => m.UUID == UUID).Count > 0)
+                                {
+                                    Custom.WriteLine($"[GPU] {gpu.Name}(UUID) => {UUID}", ConsoleColor.Red);
+                                }
+                            }
                         }
                     }
+                    else
+                        Custom.WriteLine($"Error grabbing GPUs", ConsoleColor.DarkRed);
                 }
-                else
-                    Custom.WriteLine($"Error grabbing NetworkAdapters", ConsoleColor.DarkRed);
+                catch (Exception ex) { Custom.WriteLine($"{ex.Message}", ConsoleColor.Red); }
 
-                if (HardwareID.Monitors != null)
+                try
                 {
-                    foreach (var monitor in HardwareID.Monitors)
+                    if (HardwareID.NetworkAdapters != null)
                     {
-                        var serial = monitor.SerialNumber;
-
-                        if (serial.Length <= 1)
-                            continue;
-
-                        if (SpoofedHardwareID.Monitors.FindAll(m => m.SerialNumber == serial).Count > 0)
+                        foreach (var network in HardwareID.NetworkAdapters)
                         {
-                            Custom.WriteLine($"[Monitor] {monitor.Manufacturer} => {serial}", ConsoleColor.Red);
+                            var mac = network.Mac;
+
+                            if (network.Name.StartsWith("WAN Miniport"))
+                                continue;
+
+                            if (network.Name.Contains("vpn", StringComparison.CurrentCultureIgnoreCase))
+                                continue;
+
+                            if (SpoofedHardwareID.NetworkAdapters.FindAll(m => m.Mac == mac).Count > 0)
+                            {
+                                Custom.WriteLine($"[Network] {network.Name}(Mac) => {mac}", ConsoleColor.Red);
+                            }
+
+                            if (SpoofedHardwareID.NetworkAdapters.FindAll(m => m.Guid == network.Guid).Count > 0)
+                            {
+                                Custom.WriteLine($"[Network] {network.Name}(Guid) => {network.Guid}", ConsoleColor.Red);
+                            }
                         }
                     }
+                    else
+                        Custom.WriteLine($"Error grabbing NetworkAdapters", ConsoleColor.DarkRed);
                 }
-                else
-                    Custom.WriteLine($"Error grabbing Monitors", ConsoleColor.DarkRed);
+                catch (Exception ex) { Custom.WriteLine($"{ex.Message}", ConsoleColor.Red); }
+
+                try
+                {
+                    if (HardwareID.Monitors != null)
+                    {
+                        foreach (var monitor in HardwareID.Monitors)
+                        {
+                            var serial = monitor.SerialNumber;
+
+                            if (serial.Length <= 1)
+                                continue;
+
+                            if (SpoofedHardwareID.Monitors.FindAll(m => m.SerialNumber == serial).Count > 0)
+                            {
+                                Custom.WriteLine($"[Monitor] {monitor.Manufacturer} => {serial}", ConsoleColor.Red);
+                            }
+                        }
+                    }
+                    else
+                        Custom.WriteLine($"Error grabbing Monitors", ConsoleColor.DarkRed);
+                }
+                catch (Exception ex) { Custom.WriteLine($"{ex.Message}", ConsoleColor.Red); }
 
                 Custom.WriteLine($"---");
 
-                if (HardwareID.Partitions != null)
+                try
                 {
-                    foreach (var partition in HardwareID.Partitions)
+                    if (HardwareID.Partitions != null)
                     {
-                        var serial = partition.SerialNumber;
-
-                        if (SpoofedHardwareID.Partitions.FindAll(m => m.SerialNumber == serial).Count > 0)
+                        foreach (var partition in HardwareID.Partitions)
                         {
-                            Custom.WriteLine($"[Partition] {partition.DeviceID} => {serial}", ConsoleColor.DarkYellow);
-                        }
-                    }
-                }
-                else
-                    Custom.WriteLine($"Error grabbing Partitions", ConsoleColor.DarkRed);
+                            var serial = partition.SerialNumber;
 
-                if (HardwareID.NearbyDevices != null)
-                {
-                    foreach (var arp in HardwareID.NearbyDevices)
-                    {
-                        if (string.IsNullOrEmpty(arp.Mac))
-                            continue;
-
-                        if (arp.Mac.Length < 3)
-                            continue;
-
-                        if (SpoofedHardwareID.NearbyDevices != null)
-                        {
-                            if (SpoofedHardwareID.NearbyDevices.FindAll(m => m.Mac == arp.Mac).Count > 0)
+                            if (SpoofedHardwareID.Partitions.FindAll(m => m.SerialNumber == serial).Count > 0)
                             {
-                                Custom.WriteLine($"[NearbyDevice] {arp.Address} => {arp.Mac.Replace("-", ":")}", ConsoleColor.DarkYellow);
+                                Custom.WriteLine($"[Partition] {partition.DeviceID} => {serial}", ConsoleColor.DarkYellow);
                             }
                         }
                     }
+                    else
+                        Custom.WriteLine($"Error grabbing Partitions", ConsoleColor.DarkRed);
                 }
-                else
-                    Custom.WriteLine($"Error grabbing Nearby devices", ConsoleColor.DarkRed);
+                catch (Exception ex) { Custom.WriteLine($"{ex.Message}", ConsoleColor.Red); }
 
-                if (SpoofedHardwareID.OSInformation != null)
+                try
                 {
-                    if (HardwareID.OSInformation.MachineID == SpoofedHardwareID.OSInformation.MachineID)
+                    if (HardwareID.NearbyDevices != null)
                     {
-                        Custom.WriteLine($"[Windows] MachineID => {SpoofedHardwareID.OSInformation.MachineID}", ConsoleColor.DarkYellow);
-                    }
-
-                    if (HardwareID.OSInformation.MachineGuid == SpoofedHardwareID.OSInformation.MachineGuid)
-                    {
-                        Custom.WriteLine($"[Windows] MachineGuid => {SpoofedHardwareID.OSInformation.MachineGuid}", ConsoleColor.DarkYellow);
-                    }
-
-                    if (HardwareID.OSInformation.ProductID == SpoofedHardwareID.OSInformation.ProductID)
-                    {
-                        Custom.WriteLine($"[Windows] ProductID => {SpoofedHardwareID.OSInformation.ProductID}", ConsoleColor.DarkYellow);
-                    }
-
-                    if (HardwareID.OSInformation.InstallDate == SpoofedHardwareID.OSInformation.InstallDate)
-                    {
-                        Custom.WriteLine($"[Windows] InstallDate => {SpoofedHardwareID.OSInformation.InstallDate}", ConsoleColor.DarkYellow);
-                    }
-
-                    Custom.WriteLine($"---");
-                    Custom.WriteLine("[Windows] Username Security Identifiers:");
-                    Custom.WriteLine($"---");
-                    foreach (var user in HardwareID.OSInformation.SIDs)
-                    {
-                        var sid = user.SID;
-                        
-
-                        if(SpoofedHardwareID.OSInformation.SIDs.FindAll(m => m.SID == sid).Count > 0)
+                        foreach (var arp in HardwareID.NearbyDevices)
                         {
-                            Custom.WriteLine($"{user.Username}(SID) => {sid}", ConsoleColor.DarkYellow);
+                            if (string.IsNullOrEmpty(arp.Mac))
+                                continue;
+
+                            if (arp.Mac.Length < 3)
+                                continue;
+
+                            if (SpoofedHardwareID.NearbyDevices != null)
+                            {
+                                if (SpoofedHardwareID.NearbyDevices.FindAll(m => m.Mac == arp.Mac).Count > 0)
+                                {
+                                    Custom.WriteLine($"[NearbyDevice] {arp.Address} => {arp.Mac.Replace("-", ":")}", ConsoleColor.DarkYellow);
+                                }
+                            }
                         }
                     }
-
-                    Custom.WriteLine($"---");
-
-                    if (SpoofedHardwareID.OSInformation.Username.Contains('@'))
-                    {
-                        Custom.WriteLine($"Windows Username '{SpoofedHardwareID.OSInformation.Username}' contains email, should be offline account", ConsoleColor.Yellow);
-                    }
-
-                    if (!SpoofedHardwareID.OSInformation.SecureBoot)
-                    {
-                        Custom.WriteLine($"Secureboot is disabled, could raise flags to EasyAntiCheat", ConsoleColor.Yellow);
-                    }
+                    else
+                        Custom.WriteLine($"Error grabbing Nearby devices", ConsoleColor.DarkRed);
                 }
-                else
-                    Custom.WriteLine($"Error grabbing OSInformation", ConsoleColor.DarkRed);
+                catch (Exception ex) { Custom.WriteLine($"{ex.Message}", ConsoleColor.Red); }
 
-                if (SpoofedHardwareID.BIOS != null)
+                try
                 {
-                    if (!SpoofedHardwareID.BIOS.ReleaseDate.Contains("2024") && !SpoofedHardwareID.BIOS.ReleaseDate.Contains("2025"))
+                    if (SpoofedHardwareID.OSInformation != null)
                     {
-                        Custom.WriteLine($"Consider updating BIOS: '{SpoofedHardwareID.BIOS.ReleaseDate}'", ConsoleColor.Yellow);
+                        if (HardwareID.OSInformation.MachineID == SpoofedHardwareID.OSInformation.MachineID)
+                        {
+                            Custom.WriteLine($"[Windows] MachineID => {SpoofedHardwareID.OSInformation.MachineID}", ConsoleColor.DarkYellow);
+                        }
+
+                        if (HardwareID.OSInformation.MachineGuid == SpoofedHardwareID.OSInformation.MachineGuid)
+                        {
+                            Custom.WriteLine($"[Windows] MachineGuid => {SpoofedHardwareID.OSInformation.MachineGuid}", ConsoleColor.DarkYellow);
+                        }
+
+                        if (HardwareID.OSInformation.ProductID == SpoofedHardwareID.OSInformation.ProductID)
+                        {
+                            Custom.WriteLine($"[Windows] ProductID => {SpoofedHardwareID.OSInformation.ProductID}", ConsoleColor.DarkYellow);
+                        }
+
+                        if (HardwareID.OSInformation.InstallDate == SpoofedHardwareID.OSInformation.InstallDate)
+                        {
+                            Custom.WriteLine($"[Windows] InstallDate => {SpoofedHardwareID.OSInformation.InstallDate}", ConsoleColor.DarkYellow);
+                        }
+
+                        Custom.WriteLine($"---");
+                        Custom.WriteLine("[Windows] Username Security Identifiers:");
+                        Custom.WriteLine($"---");
+                        foreach (var user in HardwareID.OSInformation.SIDs)
+                        {
+                            var sid = user.SID;
+
+
+                            if (SpoofedHardwareID.OSInformation.SIDs.FindAll(m => m.SID == sid).Count > 0)
+                            {
+                                Custom.WriteLine($"{user.Username}(SID) => {sid}", ConsoleColor.DarkYellow);
+                            }
+                        }
+
+                        Custom.WriteLine($"---");
+
+                        if (SpoofedHardwareID.OSInformation.Username.Contains('@'))
+                        {
+                            Custom.WriteLine($"Windows Username '{SpoofedHardwareID.OSInformation.Username}' contains email, should be offline account", ConsoleColor.Yellow);
+                        }
+
+                        if (!SpoofedHardwareID.OSInformation.SecureBoot)
+                        {
+                            Custom.WriteLine($"Secureboot is disabled, could raise flags to EasyAntiCheat", ConsoleColor.Yellow);
+                        }
                     }
+                    else
+                        Custom.WriteLine($"Error grabbing OSInformation", ConsoleColor.DarkRed);
                 }
-                else
-                    Custom.WriteLine($"Error grabbing Bios", ConsoleColor.DarkRed);
+                catch (Exception ex) { Custom.WriteLine($"{ex.Message}", ConsoleColor.Red); }
+
+                try
+                {
+                    if (SpoofedHardwareID.BIOS != null)
+                    {
+                        if (!SpoofedHardwareID.BIOS.ReleaseDate.Contains("2024") && !SpoofedHardwareID.BIOS.ReleaseDate.Contains("2025"))
+                        {
+                            Custom.WriteLine($"Consider updating BIOS: '{SpoofedHardwareID.BIOS.ReleaseDate}'", ConsoleColor.Yellow);
+                        }
+                    }
+                    else
+                        Custom.WriteLine($"Error grabbing Bios", ConsoleColor.DarkRed);
+                }
+                catch (Exception ex) { Custom.WriteLine($"{ex.Message}", ConsoleColor.Red); }
             }
 
             Custom.WriteLine("Program complete");
