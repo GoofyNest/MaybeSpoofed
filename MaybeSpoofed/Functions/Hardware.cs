@@ -675,6 +675,9 @@ namespace MaybeSpoofed.Functions
                 string installDate = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "InstallDate", null)?.ToString() ?? "0";
                 HardwareID.OSInformation.InstallDate = installDate;
 
+                string SusClientId = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate", "SusClientId", null)?.ToString() ?? string.Empty;
+                HardwareID.OSInformation.SusClientId = SusClientId;
+
                 // 4. Get SID (from User Account)
                 ManagementObjectSearcher searcher = new("SELECT Name, SID FROM Win32_UserAccount");
                 foreach (ManagementObject obj in searcher.Get().Cast<ManagementObject>())

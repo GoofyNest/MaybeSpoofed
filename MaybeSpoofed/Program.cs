@@ -63,7 +63,7 @@ namespace MaybeSpoofed
                     return;
                 }
 
-                if (tempSettings.ProgramVersion != "v0.5")
+                if (tempSettings.ProgramVersion != "v0.6")
                 {
                     Custom.WriteLine("Outdated program json, please delete config folder and restart application", ConsoleColor.Red);
                     Console.ReadLine();
@@ -297,7 +297,7 @@ namespace MaybeSpoofed
 
                             if (SpoofedHardwareID.NetworkAdapters.FindAll(m => m.Guid == network.Guid).Count > 0)
                             {
-                                Custom.WriteLine($"[Network] {network.Name}(Guid) => {network.Guid}", ConsoleColor.Red);
+                                Custom.WriteLine($"[Network] {network.Name}(Guid) => {network.Guid}", ConsoleColor.DarkYellow);
                             }
                         }
                     }
@@ -386,17 +386,22 @@ namespace MaybeSpoofed
 
                         if (HardwareID.OSInformation.MachineGuid == SpoofedHardwareID.OSInformation.MachineGuid)
                         {
-                            Custom.WriteLine($"[Windows] MachineGuid => {SpoofedHardwareID.OSInformation.MachineGuid}", ConsoleColor.DarkYellow);
+                            Custom.WriteLine($"[Windows] MachineGuid => {SpoofedHardwareID.OSInformation.MachineGuid}", ConsoleColor.Red);
                         }
 
                         if (HardwareID.OSInformation.ProductID == SpoofedHardwareID.OSInformation.ProductID)
                         {
-                            Custom.WriteLine($"[Windows] ProductID => {SpoofedHardwareID.OSInformation.ProductID}", ConsoleColor.DarkYellow);
+                            Custom.WriteLine($"[Windows] ProductID => {SpoofedHardwareID.OSInformation.ProductID}", ConsoleColor.Red);
                         }
 
                         if (HardwareID.OSInformation.InstallDate == SpoofedHardwareID.OSInformation.InstallDate)
                         {
-                            Custom.WriteLine($"[Windows] InstallDate => {SpoofedHardwareID.OSInformation.InstallDate}", ConsoleColor.DarkYellow);
+                            Custom.WriteLine($"[Windows] InstallDate => {SpoofedHardwareID.OSInformation.InstallDate}", ConsoleColor.Red);
+                        }
+
+                        if(HardwareID.OSInformation.SusClientId == SpoofedHardwareID.OSInformation.SusClientId)
+                        {
+                            Custom.WriteLine($"[Windows] SusClientId => {SpoofedHardwareID.OSInformation.SusClientId}", ConsoleColor.Red);
                         }
 
                         Custom.WriteLine($"---");

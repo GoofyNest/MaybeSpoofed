@@ -2,7 +2,7 @@
 {
     public class Components
     {
-        public string ProgramVersion { get; set; } = "v0.5";
+        public string ProgramVersion { get; set; } = "v0.6";
         public System SystemInformation { get; set; } = null!;
 
         public OperatingSystem OSInformation { get; set; } = null!;
@@ -65,6 +65,7 @@
             public string MachineGuid { get; set; } = string.Empty;
             public string ProductID { get; set; } = string.Empty;
             public string InstallDate { get; set; } = string.Empty;
+            public string SusClientId {  get; set; } = string.Empty;
             public List<UsernameTable> SIDs { get; set; } = [];
         }
 
