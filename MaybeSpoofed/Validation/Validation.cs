@@ -51,13 +51,13 @@ namespace MaybeSpoofed.Validation
 
                     default:
                         {
-                            Custom.WriteLine("Have not yet dumped your motherboard, please do contact me on Discord to contribute", ConsoleColor.Cyan);
+                            Custom.WriteLine("Have not yet dumped your motherboard, please do contact me on Discord to contribute", ConsoleColor.Yellow);
                         }
                         break;
                 }
             }
 
-            Custom.WriteLine($"Please contact me on Discord if you want help: @enter_my_username", ConsoleColor.Cyan);
+            Custom.WriteLine($"Please contact me on Discord if you want help: @enter_my_username", ConsoleColor.Yellow);
 
         }
 

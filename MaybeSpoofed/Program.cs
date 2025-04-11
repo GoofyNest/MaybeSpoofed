@@ -97,57 +97,13 @@ namespace MaybeSpoofed
 
             if (SpoofedHardwareID == null)
             {
-                Custom.WriteLine("If you see any errors here, contact me on Discord", ConsoleColor.Cyan);
+                Custom.WriteLine("Please spoof and restart program to see if you are spoofed", ConsoleColor.Yellow);
             }
             else
             {
-
-                //HardwareID.MotherboardInformation.Product = "Concept";
-                //HardwareID.MotherboardInformation.SerialNumber = "123456";
-                //SpoofedHardwareID.MotherboardInformation.Product = "Concept";
-                //SpoofedHardwareID.MotherboardInformation.SerialNumber = "123456";
-                //
-                //HardwareID.SystemInformation.UUID = "00000000-0000-0000-0000-000000000000";
-                //SpoofedHardwareID.SystemInformation.UUID = "00000000-0000-0000-0000-000000000000";
-                //
-                //HardwareID.SystemInformation.SystemSerialNumber = "123456";
-                //SpoofedHardwareID.SystemInformation.SystemSerialNumber = "123456";
-                //
-                //HardwareID.DiskDrives[0].SerialNumber = "123456";
-                //HardwareID.GPUs[0].UUID = "123456";
-                //HardwareID.NetworkAdapters[0].Guid = "123456";
-                //HardwareID.NetworkAdapters[0].Mac = "ff:ff:ff:ff:ff:ff";
-                //HardwareID.Monitors[0].SerialNumber = "123456";
-                //HardwareID.Monitors[1].SerialNumber = "123456";
-                //
-                //HardwareID.NearbyDevices[0].Mac = "ff:ff:ff:ff:ff:ff";
-                //
-                //HardwareID.Partitions[0].SerialNumber = "123456";
-                //SpoofedHardwareID.Partitions[0].SerialNumber = "123456";
-                //
-                //SpoofedHardwareID.DiskDrives[0].SerialNumber = "123456";
-                //SpoofedHardwareID.GPUs[0].UUID = "123456";
-                //SpoofedHardwareID.NetworkAdapters[0].Guid = "123456";
-                //SpoofedHardwareID.NetworkAdapters[0].Mac = "ff:ff:ff:ff:ff:ff";
-                //SpoofedHardwareID.Monitors[0].SerialNumber = "123456";
-                //SpoofedHardwareID.Monitors[1].SerialNumber = "123456";
-                //
-                //SpoofedHardwareID.NearbyDevices[0].Mac = "ff:ff:ff:ff:ff:ff";
-                //
-                //HardwareID.OSInformation.MachineGuid = "8a96d405-3b6c-4cb0-adea-746bcf2fbb89";
-                //HardwareID.OSInformation.MachineID = "8a96d405-3b6c-4cb0-adea-746bcf2fbb89";
-                //HardwareID.OSInformation.InstallDate = "123456";
-                //
-                //SpoofedHardwareID.OSInformation.MachineGuid = "8a96d405-3b6c-4cb0-adea-746bcf2fbb89";
-                //SpoofedHardwareID.OSInformation.MachineID = "8a96d405-3b6c-4cb0-adea-746bcf2fbb89";
-                //SpoofedHardwareID.OSInformation.InstallDate = "123456";
-
-
-                Custom.WriteLine("---------------------------------------");
-                Custom.WriteLine("Hardware result:");
-                Custom.WriteLine("---------------------------------------");
-
-
+                Custom.WriteLine("---------------------------------------",ConsoleColor.Yellow);
+                Custom.WriteLine("Hardware result:",ConsoleColor.Yellow);
+                Custom.WriteLine("---------------------------------------",ConsoleColor.Yellow);
 
                 try
                 {
