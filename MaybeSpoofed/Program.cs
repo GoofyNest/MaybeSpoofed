@@ -30,7 +30,9 @@ namespace MaybeSpoofed
                 }
             }
 
-            Console.WriteLine("Thank you for using MaybeSpoofed, our goal is to prevent spoofer issues\nWe are trying our best to stay updated\nDiscord: chudemployee");
+            Console.Title = "MaybeSpoofed || Discord = @enter_my_username";
+
+            Console.WriteLine("Thank you for using MaybeSpoofed, our goal is to prevent spoofer issues\nWe are trying our best to stay updated\nDiscord: enter_my_username");
             Console.WriteLine("Our goal is only to support EAC Rust, but this might work for other games");
             Console.WriteLine("Remember that some games also uses traces to catch you ban evading");
 
@@ -47,6 +49,8 @@ namespace MaybeSpoofed
             Custom.WriteLine("Starting program", ConsoleColor.Cyan);
             Components HardwareID = new();
             Components SpoofedHardwareID = null!;
+
+            Components CheckForPermSpoof = Hardware.GetHardwareID();
 
             if (File.Exists("config/hardware.json"))
             {
@@ -72,9 +76,7 @@ namespace MaybeSpoofed
 
                 HardwareID = tempSettings;
 
-                Custom.WriteLine("Grabbing spoofed serials", ConsoleColor.Cyan);
-
-                SpoofedHardwareID = Hardware.GetHardwareID();
+                SpoofedHardwareID = CheckForPermSpoof;
 
                 File.WriteAllText("config/spoofed.json", JsonConvert.SerializeObject(SpoofedHardwareID, Formatting.Indented), new UTF8Encoding(true));
             }
@@ -87,9 +89,15 @@ namespace MaybeSpoofed
                 File.WriteAllText("config/hardware.json", JsonConvert.SerializeObject(HardwareID, Formatting.Indented), new UTF8Encoding(true));
             }
 
+            Custom.WriteLine("---------------------------------------");
+            Custom.WriteLine("Perm spoofer validation:");
+            Custom.WriteLine("---------------------------------------");
+
+            Validation.Validation.Start(CheckForPermSpoof);
+
             if (SpoofedHardwareID == null)
             {
-                Custom.WriteLine("Please spoof and restart program to see if you are spoofed", ConsoleColor.Yellow);
+                Custom.WriteLine("If you see any errors here, contact me on Discord", ConsoleColor.Cyan);
             }
             else
             {
@@ -139,6 +147,8 @@ namespace MaybeSpoofed
                 Custom.WriteLine("Hardware result:");
                 Custom.WriteLine("---------------------------------------");
 
+
+
                 try
                 {
                     if (SpoofedHardwareID.TPM != null)
@@ -175,14 +185,7 @@ namespace MaybeSpoofed
                     {
                         if (HardwareID.MotherboardInformation.SerialNumber == SpoofedHardwareID.MotherboardInformation.SerialNumber)
                         {
-                            if (SpoofedHardwareID.MotherboardInformation.SerialNumber.Equals("default string", StringComparison.CurrentCultureIgnoreCase))
-                            {
-                                Custom.WriteLine($"We detected that your Motherboard Serial is Default String", ConsoleColor.DarkYellow);
-                                Custom.WriteLine($"This could be normal but normally indicates that you used a Permanent spoofer", ConsoleColor.DarkYellow);
-                                Custom.WriteLine($"If you used a Perm spoofer, temp spoofers might not work for you", ConsoleColor.DarkYellow);
-                            }
-                            else
-                                Custom.WriteLine($"[Baseboard] {SpoofedHardwareID.MotherboardInformation.Product} => [{SpoofedHardwareID.MotherboardInformation.SerialNumber}]", ConsoleColor.Red);
+                            Custom.WriteLine($"[Baseboard] {SpoofedHardwareID.MotherboardInformation.Product} => [{SpoofedHardwareID.MotherboardInformation.SerialNumber}]", ConsoleColor.Red);
                         }
                     }
                     else
@@ -192,8 +195,6 @@ namespace MaybeSpoofed
 
                 try
                 {
-
-
                     if (HardwareID.SystemInformation != null)
                     {
                         if (HardwareID.SystemInformation.UUID == SpoofedHardwareID.SystemInformation.UUID)
