@@ -1,4 +1,6 @@
 # MaybeSpoofed
+- i have a talking alien, i don't need publicity
+
 A small tiny program to check if you are Hardware spoofed for EAC Rust
 
 https://dotnet.microsoft.com/en-us/download
