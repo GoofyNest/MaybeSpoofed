@@ -15,17 +15,17 @@ namespace MaybeSpoofed.Validation
 
             if(system.SystemSerialNumber != "To Be Filled By O.E.M.")
             {
-                Custom.WriteLine($"[SystemSerialNumber] is perm spoofed", ConsoleColor.Red);
+                Custom.WriteLine($"[SystemSerialNumber] is perm spoofed", ConsoleColor.DarkRed);
             }
 
             if(system.SystemVersion != "To Be Filled By O.E.M.")
             {
-                Custom.WriteLine($"[SystemVersion] is perm spoofed", ConsoleColor.Red);
+                Custom.WriteLine($"[SystemVersion] is perm spoofed", ConsoleColor.DarkRed);
             }
 
             if(!Validation.IsTailAllZeros(system.UUID))
             {
-                Custom.WriteLine($"[UUID] is perm spoofed", ConsoleColor.Red);
+                Custom.WriteLine($"[UUID] is perm spoofed", ConsoleColor.DarkRed);
             }
         }
 
@@ -39,17 +39,17 @@ namespace MaybeSpoofed.Validation
 
             if(!motherboard.SerialNumber.StartsWith("BR80"))
             {
-                Custom.WriteLine($"[SerialNumber] might be perm spoofed", ConsoleColor.DarkYellow);
+                Custom.WriteLine($"[SerialNumber] might be perm spoofed", ConsoleColor.DarkRed);
             }
 
             if (motherboard.Version != "                      ")
             {
-                Custom.WriteLine($"[Version] might be perm spoofed", ConsoleColor.DarkYellow);
+                Custom.WriteLine($"[Version] might be perm spoofed", ConsoleColor.DarkRed);
             }
 
             if(motherboard.Product.Contains("(MS-"))
             {
-                Custom.WriteLine($"[Product] is perm spoofed", ConsoleColor.Red);
+                Custom.WriteLine($"[Product] is perm spoofed", ConsoleColor.DarkRed);
             }
         }
 
@@ -63,7 +63,7 @@ namespace MaybeSpoofed.Validation
 
             if(bios.SerialNumber != "To Be Filled By O.E.M.")
             {
-                Custom.WriteLine($"[SerialNumber] is perm spoofed", ConsoleColor.Red);
+                Custom.WriteLine($"[SerialNumber] is perm spoofed", ConsoleColor.DarkRed);
             }
         }
     }

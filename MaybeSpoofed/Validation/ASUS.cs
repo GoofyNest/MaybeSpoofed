@@ -15,17 +15,17 @@ namespace MaybeSpoofed.Validation
 
             if(system.ProductName != "System Product Name")
             {
-                Custom.WriteLine($"[ProductName] is perm spoofed", ConsoleColor.Red);
+                Custom.WriteLine($"[ProductName] is perm spoofed", ConsoleColor.DarkRed);
             }
 
             if (system.SystemVersion != "System Version")
             {
-                Custom.WriteLine($"[SystemVersion] is perm spoofed", ConsoleColor.Red);
+                Custom.WriteLine($"[SystemVersion] is perm spoofed", ConsoleColor.DarkRed);
             }
 
             if (system.SystemSerialNumber != "System Serial Number")
             {
-                Custom.WriteLine($"[SystemSerialNumber] is perm spoofed", ConsoleColor.Red);
+                Custom.WriteLine($"[SystemSerialNumber] is perm spoofed", ConsoleColor.DarkRed);
             }
         }
 
@@ -39,17 +39,17 @@ namespace MaybeSpoofed.Validation
 
             if (!motherboard.SerialNumber.StartsWith("190"))
             {
-                Custom.WriteLine($"[SerialNumber] might be perm spoofed", ConsoleColor.DarkYellow);
+                Custom.WriteLine($"[SerialNumber] might be perm spoofed", ConsoleColor.DarkRed);
             }
 
             if(!motherboard.Version.Equals("rev 1.xx", StringComparison.InvariantCultureIgnoreCase))
             {
-                Custom.WriteLine($"[Version] might be perm spoofed", ConsoleColor.DarkYellow);
+                Custom.WriteLine($"[Version] might be perm spoofed", ConsoleColor.DarkRed);
             }
 
             if (motherboard.Product.Contains("(MS-"))
             {
-                Custom.WriteLine($"[Product] is perm spoofed", ConsoleColor.Red);
+                Custom.WriteLine($"[Product] is perm spoofed", ConsoleColor.DarkRed);
             }
         }
     }

@@ -39,17 +39,17 @@ namespace MaybeSpoofed.Validation
 
             if (motherboard.SerialNumber.Equals("default string", StringComparison.CurrentCultureIgnoreCase))
             {
-                Custom.WriteLine($"[SerialNumber] is perm spoofed", ConsoleColor.Red);
+                Custom.WriteLine($"[SerialNumber] is perm spoofed", ConsoleColor.DarkRed);
             }
 
             if (motherboard.Version.Equals("default string", StringComparison.CurrentCultureIgnoreCase))
             {
-                Custom.WriteLine($"[Version] is perm spoofed", ConsoleColor.Red);
+                Custom.WriteLine($"[Version] is perm spoofed", ConsoleColor.DarkRed);
             }
 
             if (!motherboard.Product.Contains("(MS-"))
             {
-                Custom.WriteLine($"[Product] might be perm spoofed", ConsoleColor.DarkYellow);
+                Custom.WriteLine($"[Product] might be perm spoofed", ConsoleColor.DarkRed);
             }
         }
     }
