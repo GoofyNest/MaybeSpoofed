@@ -436,7 +436,7 @@ namespace MaybeSpoofed.Validation.EAC
                     var serial = gpu.SerialNumber;
                     var UUID = gpu.UUID;
 
-                    if (!string.IsNullOrWhiteSpace(UUID))
+                    if (string.IsNullOrWhiteSpace(UUID))
                     {
                         WarningTable.AddRow($"GPU", gpu.Name, "[yellow]Unknown[/]", "[yellow]WARN[/]");
                         //Custom.WriteLine($"We dont support your GPU, trust your spoofer provider or check manually", ConsoleColor.DarkRed);
