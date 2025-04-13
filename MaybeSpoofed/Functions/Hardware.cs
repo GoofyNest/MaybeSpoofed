@@ -7,6 +7,7 @@ using Microsoft.Management.Infrastructure;
 using Microsoft.Win32;
 using static MaybeSpoofed.Classes.Components;
 using MaybeSpoofed.Helpers;
+using Spectre.Console;
 
 namespace MaybeSpoofed.Functions
 {
@@ -26,34 +27,92 @@ namespace MaybeSpoofed.Functions
 
         public static Components GetHardwareID()
         {
-            HardwareID = new()
-            {
-                SystemInformation = GetSystemInformation(),
-                OSInformation = GetOperatingSystem(),
-                GPUs = GetVideoControllers(),
-                Monitors = GetMonitors(),
-                BluetoothDevices = GetBluetoothDevices(),
-                TPM = GetTrustedPlatFormModule(),
-                CPUs = GetCPUs(),
-                MotherboardInformation = GetMotherboard(),
-                BIOS = GetBios(),
-                Ram = GetRam(),
-                DiskDrives = GetHardDrives(),
-                NetworkAdapters = GetNetworkAdapters(),
-                NearbyDevices = GetAllArpEntries(),
-                WindowsFastStartup = GetWindowsFastStartup(),
-                Partitions = GetPartitions()
-            };
+            HardwareID = new();
 
-            GetSystemIdentifiers();
+            AnsiConsole.Status()
+                .Start("Grabbing serials...", ctx =>
+                {
+                    // Optional intro
+                    AnsiConsole.MarkupLine("[gray]Please wait while we scan your hardware...[/]");
+                    Thread.Sleep(1000);
+
+                    ctx.Spinner(Spinner.Known.Star);
+                    ctx.SpinnerStyle(Style.Parse("green"));
+
+                    // SYSTEM
+                    ctx.Status("Grabbing system information...");
+                    HardwareID.SystemInformation = GetSystemInformation();
+
+                    // OS
+                    ctx.Status("Scanning operating system...");
+                    HardwareID.OSInformation = GetOperatingSystem();
+
+                    // GPU
+                    ctx.Status("Grabbing video controllers...");
+                    HardwareID.GPUs = GetVideoControllers();
+
+                    // Monitors
+                    ctx.Status("Grabbing monitor information...");
+                    HardwareID.Monitors = GetMonitors();
+
+                    // Bluetooth
+                    ctx.Status("Fetching bluetooth devices...");
+                    HardwareID.BluetoothDevices = GetBluetoothDevices();
+
+                    // TPM
+                    ctx.Status("Grabbing TPM information...");
+                    HardwareID.TPM = GetTrustedPlatFormModule();
+
+                    // CPUs
+                    ctx.Status("Fetching processor info...");
+                    HardwareID.CPUs = GetCPUs();
+
+                    // Motherboard
+                    ctx.Status("Fetching motherboard info...");
+                    HardwareID.MotherboardInformation = GetMotherboard();
+
+                    // BIOS
+                    ctx.Status("Fetching BIOS info...");
+                    HardwareID.BIOS = GetBios();
+
+                    // RAM
+                    ctx.Status("Fetching RAM info...");
+                    HardwareID.Ram = GetRam();
+
+                    // Drives
+                    ctx.Status("Scanning hard drives...");
+                    HardwareID.DiskDrives = GetHardDrives();
+
+                    // Network
+                    ctx.Status("Grabbing network adapters...");
+                    HardwareID.NetworkAdapters = GetNetworkAdapters();
+
+                    // ARP / Nearby Devices
+                    ctx.Status("Scanning for nearby devices...");
+                    HardwareID.NearbyDevices = GetAllArpEntries();
+
+                    // Windows Fast Startup
+                    ctx.Status("Checking Windows Fast Startup...");
+                    HardwareID.WindowsFastStartup = GetWindowsFastStartup();
+
+                    // Partitions
+                    ctx.Status("Listing drive partitions...");
+                    HardwareID.Partitions = GetPartitions();
+
+                    // Partitions
+                    ctx.Status("Checking system identifiers...");
+                    GetSystemIdentifiers();
+
+                    Thread.Sleep(500); // tiny delay to smooth the final transition
+                });
+
+            
 
             return HardwareID;
         }
 
         public static bool GetWindowsFastStartup()
         {
-            Custom.WriteLine($"Regedit -> SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power", ConsoleColor.Cyan);
-
             // Access the registry key where the Fast Startup setting is stored
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -75,15 +134,13 @@ namespace MaybeSpoofed.Functions
                         }
                     }
                 }
-                catch { Custom.WriteLine($"Regedit -> SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power", ConsoleColor.DarkRed); }
+                catch(Exception ex) { AnsiConsole.WriteException(ex); }
             }
             return false;
         }
 
         public static List<Components.NetworkAdapter> GetNetworkAdapters()
         {
-            Custom.WriteLine($"Query -> Win32_NetworkAdapter", ConsoleColor.Cyan);
-
             List<Components.NetworkAdapter> _networkadapters = [];
 
             try
@@ -127,7 +184,7 @@ namespace MaybeSpoofed.Functions
 
                 return _networkadapters;
             }
-            catch { Custom.WriteLine($"Query -> Win32_NetworkAdapter", ConsoleColor.DarkRed); }
+            catch(Exception ex) { AnsiConsole.WriteException(ex); }
             return null!;
         }
 
@@ -137,7 +194,7 @@ namespace MaybeSpoofed.Functions
             try
             {
                 using var session = CimSession.Create(null);
-                Custom.WriteLine($"Query -> Win32_LogicalDisk", ConsoleColor.Cyan);
+
                 // Get partition serial numbers
                 foreach (var volume in session.QueryInstances("root\\cimv2", "WQL", "SELECT * FROM Win32_LogicalDisk"))
                 {
@@ -149,7 +206,7 @@ namespace MaybeSpoofed.Functions
                 }
                 return _partitions;
             }
-            catch { Custom.WriteLine($"Query -> Win32_LogicalDisk", ConsoleColor.DarkRed); }
+            catch (Exception ex) { AnsiConsole.WriteException(ex); }
 
             return null!;
         }
@@ -159,8 +216,6 @@ namespace MaybeSpoofed.Functions
             List<Components.Storage> _disks = [];
             try 
             {
-                Custom.WriteLine($"Query -> Win32_DiskDrive", ConsoleColor.Cyan);
-
                 using var session = CimSession.Create(null);
                 // Query to get all disk drive information
                 foreach (var obj in session.QueryInstances("root\\cimv2", "WQL", "SELECT * FROM Win32_DiskDrive"))
@@ -191,14 +246,13 @@ namespace MaybeSpoofed.Functions
 
                 return _disks;
             }
-            catch(Exception ex) { Custom.WriteLine($"Query -> Win32_DiskDrive {ex.Message}", ConsoleColor.DarkRed); }
+            catch (Exception ex) { AnsiConsole.WriteException(ex); }
 
             return null!;
         }
 
         public static List<Components.PhysicalMemory> GetRam()
         {
-            Custom.WriteLine($"Query -> Win32_PhysicalMemory", ConsoleColor.Cyan);
             List<Components.PhysicalMemory> _ram = [];
 
             try
@@ -223,14 +277,13 @@ namespace MaybeSpoofed.Functions
                 }
                 return _ram;
             }
-            catch { Custom.WriteLine($"Query -> Win32_PhysicalMemory", ConsoleColor.DarkRed); }
+            catch (Exception ex) { AnsiConsole.WriteException(ex); }
 
             return null!;
         }
 
         public static Components.Bios GetBios()
         {
-            Custom.WriteLine($"Query -> Win32_BIOS", ConsoleColor.Cyan);
             try
             {
                 using var session = CimSession.Create(null); // Local session
@@ -259,13 +312,12 @@ namespace MaybeSpoofed.Functions
                     return Bios;
                 }
             }
-            catch { Custom.WriteLine($"Query -> Win32_BIOS", ConsoleColor.DarkRed); }
+            catch (Exception ex) { AnsiConsole.WriteException(ex); }
             return null!;
         }
 
         public static Components.Motherboard GetMotherboard()
         {
-            Custom.WriteLine($"Query -> Win32_BaseBoard", ConsoleColor.Cyan);
             try
             {
                 using var session = CimSession.Create(null); // Local session
@@ -283,14 +335,12 @@ namespace MaybeSpoofed.Functions
                     return motherboard;
                 }
             }
-            catch { Custom.WriteLine($"Query -> Win32_BaseBoard", ConsoleColor.DarkRed); }
+            catch (Exception ex) { AnsiConsole.WriteException(ex); }
             return null!;
         }
 
         public static List<Components.Processor> GetCPUs()
         {
-            Custom.WriteLine($"Query -> Win32_Processor", ConsoleColor.Cyan);
-
             List<Components.Processor> _cpus = [];
 
             try
@@ -322,15 +372,13 @@ namespace MaybeSpoofed.Functions
                 }
                 return _cpus;
             }
-            catch { Custom.WriteLine($"Query -> Win32_Processor", ConsoleColor.DarkRed);  }
+            catch (Exception ex) { AnsiConsole.WriteException(ex); }
 
             return null!;
         }
 
         public static Components.OperatingSystem GetOperatingSystem()
         {
-            Custom.WriteLine($"Query -> Win32_OperatingSystem", ConsoleColor.Cyan);
-
             try
             {
                 using var session = CimSession.Create(null);
@@ -365,15 +413,13 @@ namespace MaybeSpoofed.Functions
                     return OSInformation;
                 }
             }
-            catch { Custom.WriteLine($"Query -> Win32_OperatingSystem", ConsoleColor.DarkRed); }
+            catch (Exception ex) { AnsiConsole.WriteException(ex); }
 
             return null!;
         }
         
         public static Components.System GetSystemInformation()
         {
-            Custom.WriteLine($"Query -> Win32_ComputerSystemProduct", ConsoleColor.Cyan);
-
             try
             {
                 using var session = CimSession.Create(null);
@@ -391,15 +437,13 @@ namespace MaybeSpoofed.Functions
                     return SystemInformation;
                 }
             }
-            catch { Custom.WriteLine($"Query -> Win32_ComputerSystemProduct", ConsoleColor.DarkRed); }
+            catch (Exception ex) { AnsiConsole.WriteException(ex); }
 
             return null!;
         }
 
         public static List<Components.Monitor> GetMonitors()
         {
-            Custom.WriteLine($"Query -> WmiMonitorID", ConsoleColor.Cyan);
-
             List<Components.Monitor> _monitors = [];
 
             try
@@ -432,15 +476,13 @@ namespace MaybeSpoofed.Functions
 
                 return _monitors;
             }
-            catch { Custom.WriteLine($"Query -> WmiMonitorID", ConsoleColor.DarkRed); }
+            catch (Exception ex) { AnsiConsole.WriteException(ex); }
 
             return null!;
         }
 
         public static List<BluetoothDevice> GetBluetoothDevices()
         {
-            Custom.WriteLine($"Query -> Win32_PnPEntity %Bluetooth%", ConsoleColor.Cyan);
-
             List<BluetoothDevice> _bluetooth = [];
 
             try
@@ -463,15 +505,13 @@ namespace MaybeSpoofed.Functions
                 }
                 return _bluetooth;
             }
-            catch { Custom.WriteLine($"Query -> Win32_PnPEntity", ConsoleColor.DarkRed); }
+            catch (Exception ex) { AnsiConsole.WriteException(ex); }
 
             return null!;
         }
 
         public static TrustedPlatFormModule GetTrustedPlatFormModule()
         {
-            Custom.WriteLine($"Query -> Win32_Tpm", ConsoleColor.Cyan);
-
             try
             {
                 using var session = CimSession.Create(null);
@@ -479,7 +519,6 @@ namespace MaybeSpoofed.Functions
 
                 if (instances == null || !instances.Any())
                 {
-                    Custom.WriteLine("Win32_Tpm is disabled", ConsoleColor.Cyan);
                     return null!;
                 }
 
@@ -495,10 +534,7 @@ namespace MaybeSpoofed.Functions
                     };
                 }
             }
-            catch (Exception ex)
-            {
-                Custom.WriteLine($"Query -> Win32_Tpm: {ex.Message}", ConsoleColor.DarkRed);
-            }
+            catch (Exception ex) { AnsiConsole.WriteException(ex); }
 
             return null!;
         }
@@ -506,8 +542,6 @@ namespace MaybeSpoofed.Functions
         public static List<VideoController> GetVideoControllers()
         {
             List<VideoController> _gpus = [];
-
-            Custom.WriteLine($"Query -> Win32_VideoController", ConsoleColor.Cyan);
 
             try
             {
@@ -525,8 +559,6 @@ namespace MaybeSpoofed.Functions
 
                     if (videoController.Name.Contains("NVIDIA"))
                     {
-                        Custom.WriteLine($"Supported GPU Found -> {videoController.Name}", ConsoleColor.Cyan);
-
                         try
                         {
                             // Run the nvidia-smi command and capture the output
@@ -539,7 +571,6 @@ namespace MaybeSpoofed.Functions
                                 CreateNoWindow = true
                             };
 
-                            Custom.WriteLine($"Command -> nvidia-smi", ConsoleColor.Cyan);
                             using Process? process = Process.Start(startInfo);
                             if (process != null)
                             {
@@ -553,14 +584,7 @@ namespace MaybeSpoofed.Functions
                                 videoController.Version = ExtractValue(output, "VBIOS Version");
                             }
                         }
-                        catch
-                        {
-                            Custom.WriteLine($"Command -> nvidia-smi", ConsoleColor.DarkRed);
-                        }
-                    }
-                    else
-                    {
-                        Custom.WriteLine($"Not supported GPU found -> {videoController.Name}", ConsoleColor.DarkRed);
+                        catch (Exception ex) { AnsiConsole.WriteException(ex); }
                     }
 
                     _gpus.Add(videoController);
@@ -599,7 +623,6 @@ namespace MaybeSpoofed.Functions
 
             try
             {
-                Custom.WriteLine($"Command -> arp -a", ConsoleColor.Cyan);
                 ProcessStartInfo pro = new("cmd", "/C arp -a")
                 {
                     RedirectStandardOutput = true,
@@ -610,7 +633,6 @@ namespace MaybeSpoofed.Functions
                 using Process? process = Process.Start(pro);
                 if (process == null)
                 {
-                    Custom.WriteLine("Command -> Maybe permission error?", ConsoleColor.DarkRed);
                     return null!;
                 }
 
@@ -623,16 +645,10 @@ namespace MaybeSpoofed.Functions
                 // Use Regex to find all matches in the output
                 MatchCollection matches = arpEntryPattern.Matches(output);
 
-                //Custom.WriteLine($"Found ARP entries: {matches.Count}", ConsoleColor.DarkMagenta);
-
                 foreach (Match match in matches)
                 {
                     string internetAddress = match.Groups[1].Value;
                     string physicalAddress = match.Groups[2].Value;
-
-                    // Ignore multicast/broadcast addresses (224.x.x.x, 239.x.x.x, 255.x.x.x)
-                    //if (internetAddress.StartsWith("224.0.0") || internetAddress.StartsWith("239.255") || internetAddress.StartsWith("255"))
-                    //    continue;
 
                     if (physicalAddress.StartsWith("01-00-5e"))
                         continue;
@@ -640,19 +656,13 @@ namespace MaybeSpoofed.Functions
                     if (physicalAddress == "ff-ff-ff-ff-ff-ff")
                         continue;
 
-                    //Custom.WriteLine($"NearByDevice -> {internetAddress} {physicalAddress}", ConsoleColor.DarkMagenta);
-
                     routerMacs.Add(new ArpTable() { Address = internetAddress, Mac = physicalAddress });
                 }
 
                 return routerMacs;
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Command -> ARP: {ex.Message}");
-            }
+            catch (Exception ex) { AnsiConsole.WriteException(ex); }
 
-            Custom.WriteLine("Command -> Maybe permission error?", ConsoleColor.DarkRed);
             return null!;
         }
 
@@ -660,36 +670,27 @@ namespace MaybeSpoofed.Functions
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                // 1. Get MachineId (from SQMClient)
-                string machineId = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\SQMClient", "MachineId", null)?.ToString() ?? string.Empty;
-                HardwareID.OSInformation.MachineID = machineId;
-
-                // 2. Get MachineGuid (from Cryptography)
-                string machineGuid = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography", "MachineGuid", null)?.ToString() ?? string.Empty;
-                HardwareID.OSInformation.MachineGuid = machineGuid;
-
-                // 3. Get ProductId (from Windows NT CurrentVersion)
-                string productId = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "ProductId", null)?.ToString() ?? string.Empty;
-                HardwareID.OSInformation.ProductID = productId;
-
-                string installDate = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "InstallDate", null)?.ToString() ?? "0";
-                HardwareID.OSInformation.InstallDate = installDate;
-
-                string SusClientId = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate", "SusClientId", null)?.ToString() ?? string.Empty;
-                HardwareID.OSInformation.SusClientId = SusClientId;
-
-                // 4. Get SID (from User Account)
-                ManagementObjectSearcher searcher = new("SELECT Name, SID FROM Win32_UserAccount");
-                foreach (ManagementObject obj in searcher.Get().Cast<ManagementObject>())
+                try
                 {
-                    string userName = obj["Name"]?.ToString() ?? string.Empty;
-                    string userSid = obj["SID"]?.ToString() ?? string.Empty;
+                    // 1. Get MachineId (from SQMClient)
+                    string machineId = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\SQMClient", "MachineId", null)?.ToString() ?? string.Empty;
+                    HardwareID.OSInformation.MachineID = machineId;
 
-                    if (string.IsNullOrWhiteSpace(userSid))
-                        continue;
+                    // 2. Get MachineGuid (from Cryptography)
+                    string machineGuid = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography", "MachineGuid", null)?.ToString() ?? string.Empty;
+                    HardwareID.OSInformation.MachineGuid = machineGuid;
 
-                    HardwareID.OSInformation.SIDs.Add(new UsernameTable() { Username = userName, SID = userSid });
+                    // 3. Get ProductId (from Windows NT CurrentVersion)
+                    string productId = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "ProductId", null)?.ToString() ?? string.Empty;
+                    HardwareID.OSInformation.ProductID = productId;
+
+                    string installDate = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "InstallDate", null)?.ToString() ?? "0";
+                    HardwareID.OSInformation.InstallDate = installDate;
+
+                    string SusClientId = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate", "SusClientId", null)?.ToString() ?? string.Empty;
+                    HardwareID.OSInformation.SusClientId = SusClientId;
                 }
+                catch (Exception ex) { AnsiConsole.WriteException(ex); }
             }
         }
     }

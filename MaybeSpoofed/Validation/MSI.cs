@@ -52,10 +52,5 @@ namespace MaybeSpoofed.Validation
                 Custom.WriteLine($"[Product] might be perm spoofed", ConsoleColor.DarkYellow);
             }
         }
-
-        public static void BIOS(Components.Bios bios)
-        {
-
-        }
     }
 }

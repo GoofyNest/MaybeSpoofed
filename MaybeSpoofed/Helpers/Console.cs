@@ -51,11 +51,12 @@ namespace MaybeSpoofed.Helpers
             Console.Write(prefix);
             Console.ResetColor();
 
-            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.ForegroundColor = ConsoleColor.Gray;
             Console.Write($"[{DateTime.Now:HH:mm:ss}] ");
-            Console.ResetColor();
 
+            Console.ForegroundColor = color;
             Console.WriteLine($"{message}");
+            Console.ResetColor();
 
         }
     }
