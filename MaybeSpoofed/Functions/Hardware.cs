@@ -1,13 +1,11 @@
 ﻿using System.Diagnostics;
-using System.Management;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using MaybeSpoofed.Classes;
 using Microsoft.Management.Infrastructure;
 using Microsoft.Win32;
-using static MaybeSpoofed.Classes.Components;
-using MaybeSpoofed.Helpers;
 using Spectre.Console;
+using static MaybeSpoofed.Classes.Components;
 
 namespace MaybeSpoofed.Functions
 {

@@ -1,5 +1,4 @@
 ﻿using MaybeSpoofed.Classes;
-using MaybeSpoofed.Functions;
 using MaybeSpoofed.Helpers;
 
 namespace MaybeSpoofed.Validation

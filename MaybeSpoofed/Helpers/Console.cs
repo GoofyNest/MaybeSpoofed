@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace MaybeSpoofed.Helpers
+﻿namespace MaybeSpoofed.Helpers
 {
     public static class Custom
     {

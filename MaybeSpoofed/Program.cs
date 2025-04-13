@@ -1,11 +1,10 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
+using System.Text;
 using MaybeSpoofed.Classes;
 using MaybeSpoofed.Functions;
 using Newtonsoft.Json;
-using System.Security.Principal;
-using System.Runtime.InteropServices;
-using System.Diagnostics;
-using MaybeSpoofed.Helpers;
 using Spectre.Console;
 
 namespace MaybeSpoofed
