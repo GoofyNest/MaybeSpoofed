@@ -151,29 +151,35 @@ namespace MaybeSpoofed.Functions
                 // Query to get the GUIDs from Win32_NetworkAdapterConfiguration
                 foreach (var obj in session.QueryInstances("root\\cimv2", "WQL", "SELECT Index, SettingID FROM Win32_NetworkAdapterConfiguration"))
                 {
-                    if (obj.CimInstanceProperties["Index"]?.Value is uint index &&
-                        obj.CimInstanceProperties["SettingID"]?.Value is string settingId)
-                    {
-                        adapterGuids[index] = settingId;
-                    }
+                    uint? index = SafeGet<uint>(obj, "Index");
+
+                    string? settingId = SafeGet<string>(obj, "SettingID");
+
+                    if (index == null)
+                        continue;
+
+                    if (string.IsNullOrWhiteSpace(settingId))
+                        continue;
+
+                    adapterGuids[index.Value] = settingId;
                 }
 
                 // Query to get network adapter information
                 foreach (var obj in session.QueryInstances("root\\cimv2", "WQL", "SELECT * FROM Win32_NetworkAdapter"))
                 {
                     // Skip adapters without MAC address
-                    var macAddress = obj.CimInstanceProperties["MACAddress"]?.Value?.ToString();
-                    if (string.IsNullOrEmpty(macAddress))
+                    var macAddress = SafeGet<string>(obj, "MACAddress");
+                    if (string.IsNullOrWhiteSpace(macAddress))
                         continue; // Skip this adapter if MAC address is not available
 
-                    uint? index = obj.CimInstanceProperties["Index"]?.Value as uint?;
+                    uint? index = SafeGet<uint>(obj, "Index");
 
                     Components.NetworkAdapter adapter = new()
                     {
-                        Name = obj.CimInstanceProperties["Name"]?.Value.ToString() ?? string.Empty,
+                        Name = SafeGet(obj, "Name"),
                         Mac = macAddress,
-                        Type = obj.CimInstanceProperties["AdapterType"]?.Value.ToString() ?? string.Empty,
-                        Manufacturer = obj.CimInstanceProperties["Manufacturer"]?.Value.ToString() ?? string.Empty,
+                        Type = SafeGet(obj, "AdapterType"),
+                        Manufacturer = SafeGet(obj, "Manufacturer"),
                         Guid = index.HasValue && adapterGuids.TryGetValue(index.Value, out string? value) ? value : string.Empty
                     };
 
@@ -194,10 +200,10 @@ namespace MaybeSpoofed.Functions
                 using var session = CimSession.Create(null);
 
                 // Get partition serial numbers
-                foreach (var volume in session.QueryInstances("root\\cimv2", "WQL", "SELECT * FROM Win32_LogicalDisk"))
+                foreach (var obj in session.QueryInstances("root\\cimv2", "WQL", "SELECT * FROM Win32_LogicalDisk"))
                 {
-                    string volumeSerialNumber = volume.CimInstanceProperties["VolumeSerialNumber"]?.Value?.ToString() ?? string.Empty;
-                    string volumeDeviceID = volume.CimInstanceProperties["DeviceID"]?.Value?.ToString() ?? string.Empty;
+                    string volumeSerialNumber = SafeGet(obj, "VolumeSerialNumber");
+                    string volumeDeviceID = SafeGet(obj, "DeviceID");
 
                     _partitions.Add(new() { DeviceID = volumeDeviceID, SerialNumber = volumeSerialNumber });
 
@@ -218,25 +224,25 @@ namespace MaybeSpoofed.Functions
                 // Query to get all disk drive information
                 foreach (var obj in session.QueryInstances("root\\cimv2", "WQL", "SELECT * FROM Win32_DiskDrive"))
                 {
-                    string Partitions = obj.CimInstanceProperties["Partitions"]?.Value.ToString() ?? "0";
-                    string BytesPerSector = obj.CimInstanceProperties["BytesPerSector"]?.Value.ToString() ?? "0";
+                    string Partitions = SafeGet(obj, "Partitions");
+                    string BytesPerSector = SafeGet(obj, "BytesPerSector");
 
                     // Get DeviceID (to correlate with logical disk)
-                    string deviceID = obj.CimInstanceProperties["DeviceID"]?.Value.ToString() ?? string.Empty;
+                    string deviceID = SafeGet(obj, "DeviceID");
 
                     Components.Storage Disk = new()
                     {
                         DeviceID = deviceID,
-                        Model = obj.CimInstanceProperties["Model"]?.Value.ToString() ?? string.Empty,
-                        SerialNumber = obj.CimInstanceProperties["SerialNumber"]?.Value.ToString() ?? string.Empty,
-                        Size = obj.CimInstanceProperties["Size"]?.Value.ToString() ?? string.Empty,
-                        Type = obj.CimInstanceProperties["MediaType"]?.Value.ToString() ?? string.Empty,
+                        Model = SafeGet(obj, "Model"),
+                        SerialNumber = SafeGet(obj, "SerialNumber"),
+                        Size = SafeGet(obj, "Size"),
+                        Type = SafeGet(obj, "MediaType"),
 
                         Partitions = int.Parse(Partitions),
 
-                        Manufacturer = obj.CimInstanceProperties["Manufacturer"]?.Value.ToString() ?? string.Empty,
+                        Manufacturer = SafeGet(obj, "Manufacturer"),
                         BytesPerSector = int.Parse(BytesPerSector),
-                        FirmwareRevision = obj.CimInstanceProperties["FirmwareRevision"]?.Value.ToString() ?? string.Empty,
+                        FirmwareRevision = SafeGet(obj, "FirmwareRevision"),
                     };
 
                     _disks.Add(Disk);
@@ -261,14 +267,14 @@ namespace MaybeSpoofed.Functions
                 {
                     Components.PhysicalMemory Ram = new()
                     {
-                        Location = obj.CimInstanceProperties["DeviceLocator"]?.Value.ToString() ?? string.Empty,
-                        Capacity = obj.CimInstanceProperties["Capacity"]?.Value.ToString() ?? string.Empty,
-                        Manufacturer = obj.CimInstanceProperties["Manufacturer"]?.Value.ToString() ?? string.Empty,
-                        Speed = obj.CimInstanceProperties["Speed"]?.Value.ToString() ?? string.Empty,
-                        SerialNumber = obj.CimInstanceProperties["SerialNumber"]?.Value.ToString() ?? string.Empty,
-                        PartNumber = obj.CimInstanceProperties["PartNumber"]?.Value.ToString() ?? string.Empty,
-                        Voltage = obj.CimInstanceProperties["ConfiguredVoltage"]?.Value.ToString() ?? string.Empty,
-                        ClockSpeed = obj.CimInstanceProperties["ConfiguredClockSpeed"]?.Value.ToString() ?? string.Empty,
+                        Location = SafeGet(obj, "DeviceLocator"),
+                        Capacity = SafeGet(obj, "Capacity"),
+                        Manufacturer = SafeGet(obj, "Manufacturer"),
+                        Speed = SafeGet(obj, "Speed"),
+                        SerialNumber = SafeGet(obj, "SerialNumber"),
+                        PartNumber = SafeGet(obj, "PartNumber"),
+                        Voltage = SafeGet(obj, "ConfiguredVoltage"),
+                        ClockSpeed = SafeGet(obj, "ConfiguredClockSpeed"),
                     };
 
                     _ram.Add(Ram);
@@ -289,10 +295,10 @@ namespace MaybeSpoofed.Functions
                 {
                     Components.Bios Bios = new()
                     {
-                        Manufacturer = obj.CimInstanceProperties["Manufacturer"]?.Value.ToString() ?? string.Empty,
-                        Version = obj.CimInstanceProperties["Version"]?.Value.ToString() ?? string.Empty,
-                        ReleaseDate = obj.CimInstanceProperties["ReleaseDate"]?.Value.ToString() ?? string.Empty,
-                        SerialNumber = obj.CimInstanceProperties["SerialNumber"]?.Value.ToString() ?? string.Empty,
+                        Manufacturer = SafeGet(obj, "Manufacturer"),
+                        Version = SafeGet(obj, "Version"),
+                        ReleaseDate = SafeGet(obj, "ReleaseDate"),
+                        SerialNumber = SafeGet(obj, "SerialNumber"),
                     };
 
                     // Check if the EFI system partition exists
@@ -323,11 +329,11 @@ namespace MaybeSpoofed.Functions
                 {
                     Components.Motherboard motherboard = new()
                     {
-                        Manufacturer = obj.CimInstanceProperties["Manufacturer"]?.Value.ToString() ?? string.Empty,
-                        Product = obj.CimInstanceProperties["Product"]?.Value.ToString() ?? string.Empty,
-                        SerialNumber = obj.CimInstanceProperties["SerialNumber"]?.Value.ToString() ?? string.Empty,
-                        Version = obj.CimInstanceProperties["Version"]?.Value.ToString() ?? string.Empty,
-                        Caption = obj.CimInstanceProperties["Caption"]?.Value.ToString() ?? string.Empty,
+                        Manufacturer = SafeGet(obj, "Manufacturer"),
+                        Product = SafeGet(obj, "Product"),
+                        SerialNumber = SafeGet(obj, "SerialNumber"),
+                        Version = SafeGet(obj, "Version"),
+                        Caption = SafeGet(obj, "Caption"),
                     };
 
                     return motherboard;
@@ -346,24 +352,24 @@ namespace MaybeSpoofed.Functions
                 using var session = CimSession.Create(null);
                 foreach (var obj in session.QueryInstances("root\\cimv2", "WQL", "SELECT * FROM Win32_Processor"))
                 {
-                    string coreCount = obj.CimInstanceProperties["NumberOfCores"]?.Value.ToString() ?? "0";
-                    string threadCount = obj.CimInstanceProperties["NumberOfLogicalProcessors"]?.Value.ToString() ?? "0";
-                    string Virtualization = obj.CimInstanceProperties["VirtualizationFirmwareEnabled"]?.Value.ToString() ?? "False";
+                    string coreCount = SafeGet(obj, "NumberOfCores");
+                    string threadCount = SafeGet(obj, "NumberOfLogicalProcessors");
+                    string Virtualization = SafeGet(obj, "VirtualizationFirmwareEnabled");
 
                     Components.Processor Processor = new()
                     {
-                        Name = obj.CimInstanceProperties["Name"]?.Value.ToString() ?? string.Empty,
-                        Manufacturer = obj.CimInstanceProperties["Manufacturer"]?.Value.ToString() ?? string.Empty,
-                        MaxClockSpeed = obj.CimInstanceProperties["MaxClockSpeed"]?.Value.ToString() ?? string.Empty,
-                        SerialNumber = obj.CimInstanceProperties["ProcessorId"]?.Value.ToString() ?? string.Empty,
+                        Name = SafeGet(obj, "Name"),
+                        Manufacturer = SafeGet(obj, "Manufacturer"),
+                        MaxClockSpeed = SafeGet(obj, "MaxClockSpeed"),
+                        SerialNumber = SafeGet(obj, "ProcessorId"),
                         CoreCount = int.Parse(coreCount),
                         ThreadCount = int.Parse(threadCount),
-                        SocketDesignation = obj.CimInstanceProperties["SocketDesignation"]?.Value.ToString() ?? string.Empty,
-                        CurrentClockSpeed = obj.CimInstanceProperties["CurrentClockSpeed"]?.Value.ToString() ?? string.Empty,
+                        SocketDesignation = SafeGet(obj, "SocketDesignation"),
+                        CurrentClockSpeed = SafeGet(obj, "CurrentClockSpeed"),
                         Virtualization = bool.Parse(Virtualization),
-                        Family = obj.CimInstanceProperties["Family"]?.Value.ToString() ?? string.Empty,
-                        DataWidth = obj.CimInstanceProperties["DataWidth"]?.Value.ToString() ?? string.Empty,
-                        AddressWidth = obj.CimInstanceProperties["AddressWidth"]?.Value.ToString() ?? string.Empty,
+                        Family = SafeGet(obj, "Family"),
+                        DataWidth = SafeGet(obj, "DataWidth"),
+                        AddressWidth = SafeGet(obj, "AddressWidth"),
                     };
 
                     _cpus.Add(Processor);
@@ -385,21 +391,21 @@ namespace MaybeSpoofed.Functions
                 {
                     Components.OperatingSystem OSInformation = new()
                     {
-                        Caption = obj.CimInstanceProperties["Caption"]?.Value.ToString() ?? string.Empty,
-                        Version = obj.CimInstanceProperties["Version"]?.Value.ToString() ?? string.Empty,
-                        BuildNumber = obj.CimInstanceProperties["BuildNumber"]?.Value.ToString() ?? string.Empty,
-                        ProductType = obj.CimInstanceProperties["ProductType"]?.Value.ToString() ?? string.Empty,
-                        Manufacturer = obj.CimInstanceProperties["Manufacturer"]?.Value.ToString() ?? string.Empty,
-                        Architecture = obj.CimInstanceProperties["OSArchitecture"]?.Value.ToString() ?? string.Empty,
+                        Caption = SafeGet(obj, "Caption"),
+                        Version = SafeGet(obj, "Version"),
+                        BuildNumber = SafeGet(obj, "BuildNumber"),
+                        ProductType = SafeGet(obj, "ProductType"),
+                        Manufacturer = SafeGet(obj, "Manufacturer"),
+                        Architecture = SafeGet(obj, "OSArchitecture"),
 
-                        LastBoot = obj.CimInstanceProperties["LastBootUpTime"]?.Value.ToString() ?? string.Empty,
-                        Username = obj.CimInstanceProperties["RegisteredUser"]?.Value.ToString() ?? string.Empty,
-                        SerialNumber = obj.CimInstanceProperties["SerialNumber"]?.Value.ToString() ?? string.Empty,
+                        LastBoot = SafeGet(obj, "LastBootUpTime"),
+                        Username = SafeGet(obj, "RegisteredUser"),
+                        SerialNumber = SafeGet(obj, "SerialNumber"),
                     };
 
                     // Check SecureBootEnabled property
-                    var secureBoot = obj.CimInstanceProperties["SecureBootEnabled"]?.Value;
-                    if (secureBoot != null)
+                    var secureBoot = SafeGet(obj, "SecureBootEnabled");
+                    if (!string.IsNullOrWhiteSpace(secureBoot))
                     {
                         OSInformation.SecureBoot = true;
                     }
@@ -425,11 +431,11 @@ namespace MaybeSpoofed.Functions
                 {
                     Components.System SystemInformation = new()
                     {
-                        ProductName = obj.CimInstanceProperties["Name"]?.Value.ToString() ?? string.Empty,
-                        SystemSerialNumber = obj.CimInstanceProperties["IdentifyingNumber"]?.Value.ToString() ?? string.Empty,
-                        Vendor = obj.CimInstanceProperties["Vendor"]?.Value.ToString() ?? string.Empty,
-                        SystemVersion = obj.CimInstanceProperties["Version"]?.Value.ToString() ?? string.Empty,
-                        UUID = obj.CimInstanceProperties["UUID"]?.Value.ToString() ?? string.Empty,
+                        ProductName = SafeGet(obj, "Name"),
+                        SystemSerialNumber = SafeGet(obj, "IdentifyingNumber"),
+                        Vendor = SafeGet(obj, "Vendor"),
+                        SystemVersion = SafeGet(obj, "Version"),
+                        UUID = SafeGet(obj, "UUID"),
                     };
 
                     return SystemInformation;
@@ -456,9 +462,9 @@ namespace MaybeSpoofed.Functions
                 {
                     Components.Monitor Monitor = new();
 
-                    var manufacturerBytes = obj.CimInstanceProperties["ManufacturerName"]?.Value as ushort[];
-                    var productBytes = obj.CimInstanceProperties["ProductCodeID"]?.Value as ushort[];
-                    var serialBytes = obj.CimInstanceProperties["SerialNumberID"]?.Value as ushort[];
+                    ushort[]? manufacturerBytes = SafeGet<ushort[]>(obj, "ManufacturerName");
+                    ushort[]? productBytes = SafeGet<ushort[]>(obj, "productBytes");
+                    ushort[]? serialBytes = SafeGet<ushort[]>(obj, "SerialNumberID");
 
                     string manufacturerCode = Hardware.ConvertToString(manufacturerBytes);
                     string manufacturer = Hardware.ManufacturerMap.TryGetValue(manufacturerCode, out string? fullName)
@@ -494,9 +500,9 @@ namespace MaybeSpoofed.Functions
                     {
                         BluetoothDevice BluetoothDevice = new()
                         {
-                            Name = obj.CimInstanceProperties["Name"]?.Value.ToString() ?? string.Empty,
-                            Manufacturer = obj.CimInstanceProperties["Manufacturer"]?.Value.ToString() ?? string.Empty,
-                            Status = obj.CimInstanceProperties["Status"]?.Value.ToString() ?? string.Empty
+                            Name = SafeGet(obj, "Name"),
+                            Manufacturer = SafeGet(obj, "Manufacturer"),
+                            Status = SafeGet(obj, "Status")
                         };
                         _bluetooth.Add(BluetoothDevice);
                     }
@@ -524,11 +530,11 @@ namespace MaybeSpoofed.Functions
                 {
                     return new TrustedPlatFormModule
                     {
-                        ManufacturerID = obj.CimInstanceProperties["ManufacturerID"]?.Value?.ToString() ?? string.Empty,
-                        ManufacturerVersion = obj.CimInstanceProperties["ManufacturerVersion"]?.Value?.ToString() ?? string.Empty,
-                        Version = obj.CimInstanceProperties["SpecVersion"]?.Value?.ToString() ?? string.Empty,
+                        ManufacturerID = SafeGet(obj, "ManufacturerID"),
+                        ManufacturerVersion = SafeGet(obj, "ManufacturerVersion"),
+                        Version = SafeGet(obj, "SpecVersion"),
                         IsTPMPResent = true,
-                        Activated = obj.CimInstanceProperties["IsActivated_InitialValue"]?.Value?.ToString() ?? string.Empty
+                        Activated = SafeGet(obj, "IsActivated_InitialValue")
                     };
                 }
             }
@@ -550,9 +556,9 @@ namespace MaybeSpoofed.Functions
                 {
                     VideoController videoController = new()
                     {
-                        Name = obj.CimInstanceProperties["Name"]?.Value.ToString() ?? string.Empty,
-                        DeviceID = obj.CimInstanceProperties["PNPDeviceID"]?.Value.ToString() ?? string.Empty,
-                        Status = obj.CimInstanceProperties["Status"]?.Value.ToString() ?? string.Empty
+                        Name = SafeGet(obj, "Name"),
+                        DeviceID = SafeGet(obj, "PNPDeviceID"),
+                        Status = SafeGet(obj, "Status")
                     };
 
                     if (videoController.Name.Contains("NVIDIA"))
@@ -673,23 +679,58 @@ namespace MaybeSpoofed.Functions
                     // 1. Get MachineId (from SQMClient)
                     string machineId = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\SQMClient", "MachineId", null)?.ToString() ?? string.Empty;
                     HardwareID.OSInformation.MachineID = machineId;
+                }
+                catch (Exception ex) { AnsiConsole.WriteException(ex); }
 
+                try
+                {
                     // 2. Get MachineGuid (from Cryptography)
                     string machineGuid = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography", "MachineGuid", null)?.ToString() ?? string.Empty;
                     HardwareID.OSInformation.MachineGuid = machineGuid;
+                }
+                catch (Exception ex) { AnsiConsole.WriteException(ex); }
 
+                try
+                {
                     // 3. Get ProductId (from Windows NT CurrentVersion)
                     string productId = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "ProductId", null)?.ToString() ?? string.Empty;
                     HardwareID.OSInformation.ProductID = productId;
+                }
+                catch (Exception ex) { AnsiConsole.WriteException(ex); }
 
+                try
+                {
                     string installDate = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "InstallDate", null)?.ToString() ?? "0";
                     HardwareID.OSInformation.InstallDate = installDate;
+                }
+                catch (Exception ex) { AnsiConsole.WriteException(ex); }
 
+                try
+                {
                     string SusClientId = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate", "SusClientId", null)?.ToString() ?? string.Empty;
                     HardwareID.OSInformation.SusClientId = SusClientId;
                 }
                 catch (Exception ex) { AnsiConsole.WriteException(ex); }
             }
+        }
+
+        private static T? SafeGet<T>(CimInstance obj, string propertyName)
+        {
+            if (obj.CimInstanceProperties[propertyName] is CimProperty prop && prop.Value is T value)
+                return value;
+
+            return default;
+        }
+
+        private static string SafeGet(CimInstance obj, string property)
+        {
+            try
+            {
+                return obj.CimInstanceProperties[property]?.Value?.ToString() ?? string.Empty;
+            }
+            catch (Exception ex) { AnsiConsole.WriteException(ex); }
+
+            return string.Empty;
         }
     }
 }
