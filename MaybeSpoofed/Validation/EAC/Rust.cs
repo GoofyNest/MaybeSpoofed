@@ -9,6 +9,16 @@ namespace MaybeSpoofed.Validation.EAC
         public static Table WarningTable { get; set; } = new();
 
 
+        public static void AddError(string origin = "", string reference = "", string identifier = "", string status = "", string note = "")
+        {
+            ErrorTable.AddRow(origin, reference, identifier, status, note);
+        }
+
+        public static void AddWarning(string origin = "", string reference = "", string identifier = "", string status = "", string note = "")
+        {
+            WarningTable.AddRow(origin, reference, identifier, status, note);
+        }
+
         public static void Validate(Components orig, Components spoof)
         {
             AnsiConsole.Write(new Rule("[red]Hardware result[/]").RuleStyle("red"));
@@ -45,12 +55,12 @@ namespace MaybeSpoofed.Validation.EAC
 
             if (TPMEnabled(spoof))
             {
-                ErrorTable.AddRow("TPM", "Trusted Platform Module", "", "", "[red]FAIL[/]", "Disable it in BIOS, we do not validate this");
+                AddError("TPM", "Trusted Platform Module", "", "[red]FAIL[/]", "Disable it in BIOS, we do not validate this");
             }
 
             if(BluetoothFound(spoof))
             {
-                ErrorTable.AddRow("BT", "Bluetooth devices", "", "", "[red]FAIL[/]", "Disable in BIOS, we do not validate this");
+                AddError("BT", "Bluetooth devices", "", "[red]FAIL[/]", "Disable in BIOS, we do not validate this");
             }
 
             // Check if BaseBoard is properly spoofed
@@ -107,45 +117,45 @@ namespace MaybeSpoofed.Validation.EAC
                 {
                     if (original.MachineGuid == spoofed.MachineGuid)
                     {
-                        ErrorTable.AddRow("Windows", "MachineGuid", $"[red]{original.MachineGuid}[/]", $"[red]FAIL[/]");
+                        AddError("Windows", "MachineGuid", $"[red]{original.MachineGuid}[/]", $"[red]FAIL[/]");
                     }
                     else
-                        ErrorTable.AddRow("Windows", "MachineGuid", $"[green]{spoofed.MachineGuid}[/]", $"[green]OK[/]");
+                        AddError("Windows", "MachineGuid", $"[green]{spoofed.MachineGuid}[/]", $"[green]OK[/]");
 
                     if (original.ProductID == spoofed.ProductID)
                     {
-                        ErrorTable.AddRow("Windows", "ProductID", $"[red]{original.ProductID}[/]", $"[red]FAIL[/]");
+                        AddError("Windows", "ProductID", $"[red]{original.ProductID}[/]", $"[red]FAIL[/]");
                     }
                     else
-                        ErrorTable.AddRow("Windows", "ProductID", $"[green]{spoofed.ProductID}[/]", $"[green]OK[/]");
+                        AddError("Windows", "ProductID", $"[green]{spoofed.ProductID}[/]", $"[green]OK[/]");
 
                     if (original.InstallDate == spoofed.InstallDate)
                     {
-                        ErrorTable.AddRow("Windows", "InstallDate", $"[red]{original.InstallDate}[/]", $"[red]FAIL[/]");
+                        AddError("Windows", "InstallDate", $"[red]{original.InstallDate}[/]", $"[red]FAIL[/]");
                     }
                     else
-                        ErrorTable.AddRow("Windows", "InstallDate", $"[green]{spoofed.InstallDate}[/]", $"[green]OK[/]");
+                        AddError("Windows", "InstallDate", $"[green]{spoofed.InstallDate}[/]", $"[green]OK[/]");
 
                     if (original.SusClientId == spoofed.SusClientId)
                     {
-                        ErrorTable.AddRow("Windows", "SusClientId", $"[red]{original.SusClientId}[/]", $"[red]FAIL[/]");
+                        AddError("Windows", "SusClientId", $"[red]{original.SusClientId}[/]", $"[red]FAIL[/]");
                     }
                     else
-                        ErrorTable.AddRow("Windows", "SusClientId", $"[green]{spoofed.SusClientId}[/]", $"[green]OK[/]");
+                        AddError("Windows", "SusClientId", $"[green]{spoofed.SusClientId}[/]", $"[green]OK[/]");
 
                     return;
                 }
 
                 if (original.MachineID == spoofed.MachineID)
-                    WarningTable.AddRow("Windows", "MachineID", $"[yellow]{original.MachineID}[/]", "[yellow]WARN[/]");
+                    AddWarning("Windows", "MachineID", $"[yellow]{original.MachineID}[/]", "[yellow]WARN[/]");
 
                 if (spoofed.Username.Contains('@'))
-                    WarningTable.AddRow("Windows", "Username", $"[yellow]{original.Username}[/]", "[yellow]WARN[/]", "Recommend offline account");
+                    AddWarning("Windows", "Username", $"[yellow]{original.Username}[/]", "[yellow]WARN[/]", "Recommend offline account");
 
                 if (spoof.BIOS != null)
                 {
                     if (!spoof.BIOS.ReleaseDate.Contains("2024") && !spoof.BIOS.ReleaseDate.Contains("2025"))
-                        WarningTable.AddRow("Bios", "ReleaseDate", $"[yellow]{orig.BIOS.ReleaseDate}[/]", "[yellow]WARN[/]", "Recommend updating");
+                        AddWarning("Bios", "ReleaseDate", $"[yellow]{orig.BIOS.ReleaseDate}[/]", "[yellow]WARN[/]", "Recommend updating");
                 }
             }
             catch (Exception ex) { AnsiConsole.WriteException(ex); }
@@ -187,9 +197,9 @@ namespace MaybeSpoofed.Validation.EAC
                         continue;
 
                     if (spoofed.FindAll(m => m.Mac == arp.Mac).Count > 0)
-                        WarningTable.AddRow("ARP", "MAC", "[yellow]"+arp.Mac.Replace("-", ":")+ "[/]", "[yellow]WARN[/]");
+                        AddWarning("ARP", "MAC", "[yellow]"+arp.Mac.Replace("-", ":")+ "[/]", "[yellow]WARN[/]");
                     else
-                        WarningTable.AddRow("ARP", "MAC", "[green]" + arp.Mac.Replace("-", ":")+"[/]", "[green]OK[/]");
+                        AddWarning("ARP", "MAC", "[green]" + arp.Mac.Replace("-", ":")+"[/]", "[green]OK[/]");
                 }
 
             }
@@ -243,10 +253,10 @@ namespace MaybeSpoofed.Validation.EAC
 
                     if (spoofed.FindAll(m => m.SerialNumber == serial).Count > 0)
                     {
-                        WarningTable.AddRow("Partition", partition.DeviceID, $"[yellow]{serial}[/]", "[yellow]WARN[/]");
+                        AddWarning("Partition", partition.DeviceID, $"[yellow]{serial}[/]", "[yellow]WARN[/]");
                     }
                     else
-                        WarningTable.AddRow("Partition", partition.DeviceID, $"[green]{serial}[/]", "[green]OK[/]");
+                        AddWarning("Partition", partition.DeviceID, $"[green]{serial}[/]", "[green]OK[/]");
                 }
             }
             catch (Exception ex) { AnsiConsole.WriteException(ex); }
@@ -299,17 +309,17 @@ namespace MaybeSpoofed.Validation.EAC
 
                     if (serial.Length <= 1)
                     {
-                        ErrorTable.AddRow($"Monitor", monitor.Manufacturer, $"[green]{serial}[/]", $"[green]OK[/]");
+                        AddError($"Monitor", monitor.Manufacturer, $"[green]{serial}[/]", $"[green]OK[/]");
                         continue;
                     }
 
                     if (spoofed.FindAll(m => m.SerialNumber == serial).Count > 0)
                     {
-                        ErrorTable.AddRow($"Monitor", monitor.Manufacturer, $"[red]{serial}[/]", $"[red]FAIL[/]");
+                        AddError($"Monitor", monitor.Manufacturer, $"[red]{serial}[/]", $"[red]FAIL[/]");
                         //Custom.WriteLine($"[Monitor] {monitor.Manufacturer} => {serial}", ConsoleColor.Red);
                     }
                     else
-                        ErrorTable.AddRow($"Monitor", monitor.Manufacturer, $"[green]{serial}[/]", $"[green]OK[/]");
+                        AddError($"Monitor", monitor.Manufacturer, $"[green]{serial}[/]", $"[green]OK[/]");
                 }
             }
             catch (Exception ex) { AnsiConsole.WriteException(ex); }
@@ -370,20 +380,20 @@ namespace MaybeSpoofed.Validation.EAC
                     {
                         if (spoofed.FindAll(m => m.Mac == mac).Count > 0)
                         {
-                            ErrorTable.AddRow($"Network", adapter.Name, $"[red]{mac}[/]", $"[red]FAIL[/]");
+                            AddError($"Network", adapter.Name, $"[red]{mac}[/]", $"[red]FAIL[/]");
                         }
                         else
-                            ErrorTable.AddRow($"Network", adapter.Name, $"[green]{mac}[/]", $"[green]OK[/]");
+                            AddError($"Network", adapter.Name, $"[green]{mac}[/]", $"[green]OK[/]");
 
                         continue;
                     }
 
                     if (spoofed.FindAll(m => m.Guid == adapter.Guid).Count > 0)
                     {
-                        WarningTable.AddRow($"Network", adapter.Name, $"[yellow]{adapter.Guid}[/]", "[yellow]WARN[/]");
+                        AddWarning($"Network", adapter.Name, $"[yellow]{adapter.Guid}[/]", "[yellow]WARN[/]");
                     }
                     else
-                        WarningTable.AddRow($"Network", adapter.Name, $"[green]{adapter.Guid}[/]", "[green]OK[/]");
+                        AddWarning($"Network", adapter.Name, $"[green]{adapter.Guid}[/]", "[green]OK[/]");
                 }
 
             }
@@ -438,18 +448,18 @@ namespace MaybeSpoofed.Validation.EAC
 
                     if (string.IsNullOrWhiteSpace(UUID))
                     {
-                        WarningTable.AddRow($"GPU", gpu.Name, "[yellow]Unknown[/]", "[yellow]WARN[/]");
+                        AddWarning($"GPU", gpu.Name, "[yellow]Unknown[/]", "[yellow]WARN[/]");
                         //Custom.WriteLine($"We dont support your GPU, trust your spoofer provider or check manually", ConsoleColor.DarkRed);
                     }
                     else
                     {
                         if (spoofed.FindAll(m => m.UUID == UUID).Count > 0)
                         {
-                            WarningTable.AddRow($"GPU", gpu.Name, $"[yellow]{gpu.UUID}[/]", "[yellow]WARN[/]");
+                            AddWarning($"GPU", gpu.Name, $"[yellow]{gpu.UUID}[/]", "[yellow]WARN[/]");
                             //Custom.WriteLine($"[GPU] {gpu.Name}(UUID) => {UUID}", ConsoleColor.DarkYellow);
                         }
                         else
-                            WarningTable.AddRow($"GPU", gpu.Name, $"[green]???[/]", "[green]OK[/]");
+                            AddWarning($"GPU", gpu.Name, $"[green]???[/]", "[green]OK[/]");
                     }
                 }
 
@@ -505,10 +515,10 @@ namespace MaybeSpoofed.Validation.EAC
 
                     if (spoofed.FindAll(m => m.SerialNumber == serial).Count > 0)
                     {
-                        ErrorTable.AddRow($"Disk", disk.Model, $"[red]{serial}[/]", $"[red]FAIL[/]");
+                        AddError($"Disk", disk.Model, $"[red]{serial}[/]", $"[red]FAIL[/]");
                     }
                     else
-                        ErrorTable.AddRow($"Disk", disk.Model, $"[green]???[/]", $"[green]OK[/]");
+                        AddError($"Disk", disk.Model, $"[green]???[/]", $"[green]OK[/]");
                 }
             }
             catch (Exception ex) { AnsiConsole.WriteException(ex); }
@@ -561,16 +571,16 @@ namespace MaybeSpoofed.Validation.EAC
 
                     if (serial == "00000000")
                     {
-                        ErrorTable.AddRow($"Ram", ram.Location, $"[green]{serial}[/]", $"[green]OK[/]");
+                        AddError($"Ram", ram.Location, $"[green]{serial}[/]", $"[green]OK[/]");
                         continue;
                     }
 
                     if (spoofed.FindAll(m => m.SerialNumber == serial).Count > 0)
                     {
-                        ErrorTable.AddRow($"Ram", ram.Location, $"[red]{serial}[/]", $"[red]FAIL[/]");
+                        AddError($"Ram", ram.Location, $"[red]{serial}[/]", $"[red]FAIL[/]");
                     }
                     else
-                        ErrorTable.AddRow($"Ram", ram.Location, $"[green]???[/]", $"[green]OK[/]");
+                        AddError($"Ram", ram.Location, $"[green]???[/]", $"[green]OK[/]");
                 }
             }
             catch (Exception ex) { AnsiConsole.WriteException(ex); }
@@ -602,10 +612,10 @@ namespace MaybeSpoofed.Validation.EAC
 
                 if(original.UUID == spoofed.UUID)
                 {
-                    ErrorTable.AddRow($"System", "UUID", $"[red]{original.UUID}[/]", $"[red]FAIL[/]");
+                    AddError($"System", "UUID", $"[red]{original.UUID}[/]", $"[red]FAIL[/]");
                 }
                 else
-                    ErrorTable.AddRow($"System", "UUID", $"[green]{spoofed.UUID}[/]", $"[green]OK[/]");
+                    AddError($"System", "UUID", $"[green]{spoofed.UUID}[/]", $"[green]OK[/]");
             }
             catch (Exception ex) { AnsiConsole.WriteException(ex); }
         }
@@ -636,11 +646,11 @@ namespace MaybeSpoofed.Validation.EAC
 
                 if(original.SerialNumber == spoofed.SerialNumber)   
                 {
-                    ErrorTable.AddRow($"Baseboard", original.Product, $"[red]{original.SerialNumber}[/]", $"[red]FAIL[/]");
+                    AddError($"Baseboard", original.Product, $"[red]{original.SerialNumber}[/]", $"[red]FAIL[/]");
                     //Custom.WriteLine($"[Baseboard] {original.Product} => [{spoofed.SerialNumber}]", ConsoleColor.Red);
                 }
                 else
-                    ErrorTable.AddRow($"Baseboard", original.Product, $"[green]{spoofed.SerialNumber}[/]", $"[green]OK[/]");
+                    AddError($"Baseboard", original.Product, $"[green]{spoofed.SerialNumber}[/]", $"[green]OK[/]");
             }
             catch (Exception ex) { AnsiConsole.WriteException(ex); }
         }
@@ -649,7 +659,7 @@ namespace MaybeSpoofed.Validation.EAC
         {
             if (WindowsFastStartupEnabled(spoof))
             {
-                WarningTable.AddRow($"Windows", "Fast Startup", "", "[yellow]WARN[/]", "Disable this");
+                AddWarning($"Windows", "Fast Startup", "", "[yellow]WARN[/]", "Disable this");
                 //Custom.WriteLine("Windows fast startup is enabled, can lead to bans if using `Shutdown pc`", ConsoleColor.Yellow);
             }
 
